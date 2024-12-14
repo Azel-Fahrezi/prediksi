@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediksi Data</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .sidebar {
+            background-color: #343a40;
+            color: #fff;
+            min-width: 250px;
+            padding: 20px;
+        }
+        .sidebar h4 {
+            margin-bottom: 20px;
+        }
+        .sidebar a {
+            color: #fff;
+            text-decoration: none;
+            display: block;
+            padding: 10px;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+        .sidebar a:hover, .sidebar a.active {
+            background-color: #495057;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h4>Prediksi Data</h4>
+        <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">Impor Data</a>
+        <a href="{{ url_for('show_data') }}" class="{% if request.endpoint == 'show_data' %}active{% endif %}">Lihat Data</a>
+        <a href="{{ url_for('hasil_svm') }}" class="{% if request.endpoint == 'hasil_svm' %}active{% endif %}">Hasil SVM</a>
+        <a href="{{ url_for('hasil_ann') }}" class="{% if request.endpoint == 'hasil_ann' %}active{% endif %}">Hasil ANN</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+        {% block content %}
+        {% endblock %}
+    </div>
+</body>
+</html>
