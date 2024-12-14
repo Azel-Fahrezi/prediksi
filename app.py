@@ -87,8 +87,8 @@ def show_data():
         return redirect(url_for('index'))
     data = pd.read_csv(filepath)
     data['datum'] = pd.to_datetime(data['datum'])
-    data.set_index('datum', inplace=True)
-    return render_template("data.html", tables=[data.to_html(classes='data', header="true")])
+    # Tampilkan 'datum' sebagai kolom, bukan indeks
+    return render_template("data.html", tables=[data.to_html(classes='data', header="true", index=False)])
 
 @app.route("/hasil_svm")
 def hasil_svm():
