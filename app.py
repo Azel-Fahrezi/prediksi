@@ -98,42 +98,66 @@ def index():
     return render_template("import.html", file_uploaded=False)
 
 
-@app.route("/hasil_svm", methods=["GET", "POST"])
+@app.route("/hasil_svm", methods=["POST", "GET"])
 def hasil_svm():
     filepath = session.get('uploaded_file')
     if not filepath:
         return redirect(url_for('index'))
 
-    if request.method == "POST":
-        weeks = request.form.get('weeks')
-        if weeks:
-            session['weeks_svm'] = int(weeks)
-
-    weeks = session.get('weeks_svm', 12)
     data = pd.read_csv(filepath)
     data['datum'] = pd.to_datetime(data['datum'])
     data.set_index('datum', inplace=True)
-    predictions, metrics = calculate_svm(data, weeks)
-    return render_template("hasil_svm.html", predictions=[predictions.to_html(classes='data', header="true")], metrics=metrics)
+
+    if request.method == "POST":
+        weeks = int(request.form["weeks"])
+        predictions, _ = calculate_svm(data, weeks)
+
+        # Kembalikan indeks sebagai kolom dan ubah Timestamp ke string
+        predictions.reset_index(inplace=True)
+        predictions['index'] = predictions['index'].dt.strftime('%Y-%m-%d')  # Konversi Timestamp ke string
+
+        # Debugging: Print isi predictions
+        print(predictions.head())  # Pastikan ini menghasilkan format yang benar
+        prediction_records = predictions.to_dict(orient="records")
+
+        # Debugging: Print isi setelah to_dict
+        print(prediction_records)  # Pastikan dictionary ini sesuai dengan format yang diharapkan oleh template
+
+        return render_template("hasil_svm.html", predictions=prediction_records)
+
+    return render_template("hasil_svm.html")
 
 
-@app.route("/hasil_ann", methods=["GET", "POST"])
+
+@app.route("/hasil_ann", methods=["POST", "GET"])
 def hasil_ann():
     filepath = session.get('uploaded_file')
     if not filepath:
         return redirect(url_for('index'))
 
-    if request.method == "POST":
-        weeks = request.form.get('weeks')
-        if weeks:
-            session['weeks_ann'] = int(weeks)
-
-    weeks = session.get('weeks_ann', 12)
     data = pd.read_csv(filepath)
     data['datum'] = pd.to_datetime(data['datum'])
     data.set_index('datum', inplace=True)
-    predictions, metrics = calculate_ann(data, weeks)
-    return render_template("hasil_ann.html", predictions=[predictions.to_html(classes='data', header="true")], metrics=metrics)
+
+    if request.method == "POST":
+        weeks = int(request.form["weeks"])
+        predictions, _ = calculate_ann(data, weeks)
+
+        # Kembalikan indeks sebagai kolom dan ubah Timestamp ke string
+        predictions.reset_index(inplace=True)
+        predictions['index'] = predictions['index'].dt.strftime('%Y-%m-%d')  # Konversi Timestamp ke string
+
+        # Debugging: Print isi predictions
+        print(predictions.head())  # Pastikan ini menghasilkan format yang benar
+        prediction_records = predictions.to_dict(orient="records")
+
+        # Debugging: Print isi setelah to_dict
+        print(prediction_records)  # Pastikan dictionary ini sesuai dengan format yang diharapkan oleh template
+
+        return render_template("hasil_ann.html", predictions=prediction_records)
+
+    return render_template("hasil_ann.html")
+
 
 @app.route("/metrics", methods=["GET"])
 def metrics():

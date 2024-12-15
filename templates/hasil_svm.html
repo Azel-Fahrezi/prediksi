@@ -12,6 +12,27 @@
     <!-- Area untuk menampilkan hasil prediksi -->
     {% if predictions %}
         <h3>Hasil Prediksi:</h3>
-        <p>{{ predictions[0]|safe }}</p>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Datum</th>
+                    {% for key in predictions[0].keys() if key != 'index' %}
+                    <th>{{ key }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in predictions %}
+                <tr>
+                    <td>{{ row['index'] }}</td>
+                    {% for key, value in row.items() if key != 'index' %}
+                    <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Tidak ada data untuk ditampilkan.</p>
     {% endif %}
 {% endblock %}
