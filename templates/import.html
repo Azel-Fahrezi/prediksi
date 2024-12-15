@@ -16,5 +16,19 @@
     <hr>
     <h2>Data yang Diunggah</h2>
     {{ tables[0]|safe }}
+
+    <!-- Form untuk Mengatur Jumlah Minggu -->
+    <h3>Masukkan Jumlah Minggu untuk Prediksi:</h3>
+    <form method="POST" action="{{ url_for('hasil_svm') }}">
+        <label for="weeks">Jumlah Minggu:</label>
+        <input type="number" id="weeks" name="weeks" min="1" required>
+        <button type="submit" class="btn btn-primary">Prediksi SVM</button>
+    </form>
+
+    <form method="POST" action="{{ url_for('hasil_ann') }}">
+        <label for="weeks">Jumlah Minggu:</label>
+        <input type="number" id="weeks" name="weeks" min="1" required>
+        <button type="submit" class="btn btn-primary">Prediksi ANN</button>
+    </form>
 {% endif %}
 {% endblock %}

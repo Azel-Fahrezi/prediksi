@@ -79,11 +79,17 @@ def index():
     # Jika GET request
     return render_template("import.html", file_uploaded=False)
 
-@app.route("/hasil_svm")
+@app.route("/hasil_svm", methods=["GET", "POST"])
 def hasil_svm():
     filepath = session.get('uploaded_file')
     if not filepath:
         return redirect(url_for('index'))
+    
+    # Proses input dari form
+    if request.method == "POST":
+        weeks = int(request.form.get('weeks', 12))  # Ambil input dari form
+        session['weeks'] = weeks  # Simpan ke session
+
     weeks = session.get('weeks', 12)
     data = pd.read_csv(filepath)
     data['datum'] = pd.to_datetime(data['datum'])
@@ -91,11 +97,17 @@ def hasil_svm():
     predictions = calculate_svm(data, weeks)
     return render_template("hasil_svm.html", predictions=[predictions.to_html(classes='data', header="true")])
 
-@app.route("/hasil_ann")
+@app.route("/hasil_ann", methods=["GET", "POST"])
 def hasil_ann():
     filepath = session.get('uploaded_file')
     if not filepath:
         return redirect(url_for('index'))
+    
+    # Proses input dari form
+    if request.method == "POST":
+        weeks = int(request.form.get('weeks', 12))  # Ambil input dari form
+        session['weeks'] = weeks  # Simpan ke session
+
     weeks = session.get('weeks', 12)
     data = pd.read_csv(filepath)
     data['datum'] = pd.to_datetime(data['datum'])
