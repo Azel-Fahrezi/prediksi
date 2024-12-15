@@ -79,23 +79,29 @@ def calculate_ann(dataframe, weeks):
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
-        # Proses unggah file
+        # Periksa apakah ada file yang diunggah
         if 'file' not in request.files:
             return "No file part"
         file = request.files['file']
         if file.filename == '':
             return "No file selected"
 
+        # Simpan file yang diunggah
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(filepath)
-        session['uploaded_file'] = filepath
 
         # Membaca data CSV
         data = pd.read_csv(filepath)
-        data['datum'] = pd.to_datetime(data['datum'])
-        return render_template("import.html", tables=[data.to_html(classes='data', header="true", index=False)], file_uploaded=True)
 
+        # Konversi DataFrame ke HTML
+        table_html = data.to_html(classes='table table-striped table-bordered table-hover', index=False, border=0)
+
+        # Kirim tabel ke template
+        return render_template("import.html", table_html=table_html, file_uploaded=True)
+
+    # Jika belum ada file yang diunggah
     return render_template("import.html", file_uploaded=False)
+
 
 
 @app.route("/hasil_svm", methods=["POST", "GET"])
@@ -161,21 +167,44 @@ def hasil_ann():
 
 @app.route("/metrics", methods=["GET"])
 def metrics():
+    # Periksa apakah file diunggah
     filepath = session.get('uploaded_file')
     if not filepath:
         return redirect(url_for('index'))
+    
+    try:
+        # Baca file CSV
+        data = pd.read_csv(filepath)
+        
+        # Pastikan kolom 'datum' ada di data
+        if 'datum' not in data.columns:
+            return "Kolom 'datum' tidak ditemukan dalam file yang diunggah.", 400
 
-    data = pd.read_csv(filepath)
-    data['datum'] = pd.to_datetime(data['datum'])
-    data.set_index('datum', inplace=True)
+        # Konversi kolom 'datum' ke format datetime
+        data['datum'] = pd.to_datetime(data['datum'], errors='coerce')
+        
+        # Hapus baris dengan tanggal yang tidak valid
+        data.dropna(subset=['datum'], inplace=True)
 
-    weeks_svm = session.get('weeks_svm', 12)
-    weeks_ann = session.get('weeks_ann', 12)
+        # Set 'datum' sebagai index
+        data.set_index('datum', inplace=True)
 
-    _, metrics_svm = calculate_svm(data, weeks_svm)
-    _, metrics_ann = calculate_ann(data, weeks_ann)
+        # Ambil parameter weeks dari sesi, dengan nilai default 12
+        weeks_svm = int(session.get('weeks_svm', 12))
+        weeks_ann = int(session.get('weeks_ann', 12))
 
+        # Jalankan perhitungan SVM dan ANN
+        _, metrics_svm = calculate_svm(data, weeks_svm)
+        _, metrics_ann = calculate_ann(data, weeks_ann)
+
+    except FileNotFoundError:
+        return "File tidak ditemukan. Silakan unggah ulang file.", 404
+    except Exception as e:
+        return f"Terjadi kesalahan: {str(e)}", 500
+
+    # Render template dengan hasil evaluasi
     return render_template("metrics.html", metrics_svm=metrics_svm, metrics_ann=metrics_ann)
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)

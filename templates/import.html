@@ -15,6 +15,8 @@
 {% if file_uploaded %}
     <hr>
     <h2>Data yang Diunggah</h2>
-    {{ tables[0]|safe }}
+    <div class="table-responsive">
+        {{ table_html|safe }}
+    </div>
 {% endif %}
 {% endblock %}
