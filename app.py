@@ -4,9 +4,7 @@ import os
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.optimizers import Adam
+from sklearn.neural_network import MLPRegressor
 
 app = Flask(__name__)
 app.secret_key = 'secretkey123'
@@ -41,17 +39,14 @@ def calculate_ann(dataframe, weeks):
     for column in dataframe.columns:
         y = dataframe[column].values
         
-        model = Sequential([
-            Dense(32, activation='relu', input_shape=(1,)),
-            Dense(16, activation='relu'),
-            Dense(1)
-        ])
-        model.compile(optimizer=Adam(learning_rate=0.01), loss='mse')
-        model.fit(X_scaled, y, epochs=500, verbose=0)
+        # Define and train MLPRegressor
+        model = MLPRegressor(hidden_layer_sizes=(32, 16), max_iter=500, learning_rate_init=0.01, random_state=0)
+        model.fit(X_scaled, y)
 
+        # Predict future values
         future_index = np.arange(len(dataframe), len(dataframe) + weeks).reshape(-1, 1)
         future_index_scaled = scaler.transform(future_index)
-        predictions[column] = model.predict(future_index_scaled).flatten()
+        predictions[column] = model.predict(future_index_scaled)
 
     future_dates = pd.date_range(start=dataframe.index[-1], periods=weeks + 1, freq='W')[1:]
     prediction_df = pd.DataFrame(predictions, index=future_dates)
@@ -60,7 +55,6 @@ def calculate_ann(dataframe, weeks):
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
-        # Proses unggah file
         if 'file' not in request.files:
             return "No file part"
         file = request.files['file']
@@ -71,7 +65,6 @@ def index():
         file.save(filepath)
         session['uploaded_file'] = filepath
 
-        # Membaca data CSV
         data = pd.read_csv(filepath)
         data['datum'] = pd.to_datetime(data['datum'])
         return render_template("import.html", tables=[data.to_html(classes='data', header="true", index=False)], file_uploaded=True)
