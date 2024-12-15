@@ -76,7 +76,6 @@ def index():
         data['datum'] = pd.to_datetime(data['datum'])
         return render_template("import.html", tables=[data.to_html(classes='data', header="true", index=False)], file_uploaded=True)
 
-    # Jika GET request
     return render_template("import.html", file_uploaded=False)
 
 @app.route("/hasil_svm", methods=["GET", "POST"])
@@ -84,13 +83,13 @@ def hasil_svm():
     filepath = session.get('uploaded_file')
     if not filepath:
         return redirect(url_for('index'))
-    
-    # Proses input dari form
-    if request.method == "POST":
-        weeks = int(request.form.get('weeks', 12))  # Ambil input dari form
-        session['weeks'] = weeks  # Simpan ke session
 
-    weeks = session.get('weeks', 12)
+    if request.method == "POST":
+        weeks = request.form.get('weeks')
+        if weeks:
+            session['weeks_svm'] = int(weeks)
+
+    weeks = session.get('weeks_svm', 12)
     data = pd.read_csv(filepath)
     data['datum'] = pd.to_datetime(data['datum'])
     data.set_index('datum', inplace=True)
@@ -102,13 +101,13 @@ def hasil_ann():
     filepath = session.get('uploaded_file')
     if not filepath:
         return redirect(url_for('index'))
-    
-    # Proses input dari form
-    if request.method == "POST":
-        weeks = int(request.form.get('weeks', 12))  # Ambil input dari form
-        session['weeks'] = weeks  # Simpan ke session
 
-    weeks = session.get('weeks', 12)
+    if request.method == "POST":
+        weeks = request.form.get('weeks')
+        if weeks:
+            session['weeks_ann'] = int(weeks)
+
+    weeks = session.get('weeks_ann', 12)
     data = pd.read_csv(filepath)
     data['datum'] = pd.to_datetime(data['datum'])
     data.set_index('datum', inplace=True)
