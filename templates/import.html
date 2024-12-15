@@ -8,7 +8,16 @@
         <label for="file">Pilih File CSV:</label>
         <input type="file" name="file" class="form-control" required>
     </div>
-    <button type="submit" class="btn btn-primary">Unggah</button>
+    <div class="d-flex align-items-center gap-2 mt-2">
+        <button type="submit" name="action" value="upload" class="btn btn-primary">Unggah</button>
+        
+        {% if file_uploaded %}
+        <form action="{{ url_for('index') }}" method="POST" style="display:inline;">
+            <input type="hidden" name="action" value="delete">
+            <button type="submit" class="btn btn-danger">Hapus Data</button>
+        </form>
+        {% endif %}
+    </div>
 </form>
 
 <!-- Tampilkan Data Jika File Sudah Diupload -->
@@ -18,5 +27,23 @@
     <div class="table-responsive">
         {{ table_html|safe }}
     </div>
+
+<!-- Tombol Navigasi Halaman -->
+<div class="d-flex justify-content-between mt-3">
+    <!-- Tombol "Sebelumnya" -->
+    {% if has_prev %}
+        <a href="{{ url_for('paginate', page=page-1) }}" class="btn btn-secondary">Sebelumnya</a>
+    {% else %}
+        <span class="btn btn-secondary disabled">Sebelumnya</span>
+    {% endif %}
+    
+    <!-- Tombol "Selanjutnya" -->
+    {% if has_next %}
+        <a href="{{ url_for('paginate', page=page+1) }}" class="btn btn-secondary">Selanjutnya</a>
+    {% else %}
+        <span class="btn btn-secondary disabled">Selanjutnya</span>
+    {% endif %}
+</div>
+
 {% endif %}
 {% endblock %}
