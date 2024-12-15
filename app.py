@@ -13,7 +13,7 @@ UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-
+# Fungsi untuk menghitung prediksi SVM
 def calculate_svm(dataframe, weeks):
     predictions = {}
     metrics = {}
@@ -26,12 +26,12 @@ def calculate_svm(dataframe, weeks):
         model = SVR(kernel='rbf')
         model.fit(X_scaled, y)
 
-        # Predict future values
+        # Prediksi nilai di masa depan
         future_index = np.arange(len(dataframe), len(dataframe) + weeks).reshape(-1, 1)
         future_index_scaled = scaler.transform(future_index)
         predictions[column] = model.predict(future_index_scaled)
 
-        # Evaluate model
+        # Evaluasi model
         y_pred = model.predict(X_scaled)
         metrics[column] = {
             'MAE': mean_absolute_error(y, y_pred),
@@ -43,7 +43,7 @@ def calculate_svm(dataframe, weeks):
     prediction_df = pd.DataFrame(predictions, index=future_dates)
     return prediction_df, metrics
 
-
+# Fungsi untuk menghitung prediksi ANN
 def calculate_ann(dataframe, weeks):
     predictions = {}
     metrics = {}
@@ -54,16 +54,16 @@ def calculate_ann(dataframe, weeks):
     for column in dataframe.columns:
         y = dataframe[column].values
 
-        # Create and train ANN model
+        # Membuat dan melatih model ANN
         model = MLPRegressor(hidden_layer_sizes=(32, 16), activation='relu', solver='adam', max_iter=500)
         model.fit(X_scaled, y)
 
-        # Predict future values
+        # Prediksi nilai di masa depan
         future_index = np.arange(len(dataframe), len(dataframe) + weeks).reshape(-1, 1)
         future_index_scaled = scaler.transform(future_index)
         predictions[column] = model.predict(future_index_scaled)
 
-        # Evaluate model
+        # Evaluasi model
         y_pred = model.predict(X_scaled)
         metrics[column] = {
             'MAE': mean_absolute_error(y, y_pred),
@@ -83,6 +83,12 @@ filename = ""
 def index():
     global uploaded_data, filename
 
+    # Periksa apakah file sudah ada di session
+    if 'uploaded_file' in session:
+        uploaded_data = pd.read_csv(session['uploaded_file']).to_dict(orient='records')
+        filename = session.get('uploaded_file').split('/')[-1]
+        return redirect(url_for('paginate', page=1))
+
     if request.method == "POST":
         action = request.form.get('action')
 
@@ -99,7 +105,7 @@ def index():
             # Simpan ke session
             session['uploaded_file'] = filepath
 
-            # Membaca data CSV
+            # Membaca data CSV dan mengonversinya ke dictionary
             uploaded_data = pd.read_csv(filepath).to_dict(orient='records')
             filename = file.filename
 
@@ -113,14 +119,13 @@ def index():
 
     return render_template("import.html", file_uploaded=False)
 
-
-
 @app.route("/page/<int:page>")
 def paginate(page):
     global uploaded_data
 
+    # Jika data kosong, redirect ke halaman utama
     if not uploaded_data:
-        return redirect(url_for('index'))  # Jika data kosong, kembalikan ke halaman utama
+        return redirect(url_for('index'))
 
     # Hitung batas paginasi
     rows_per_page = 10
@@ -148,13 +153,13 @@ def paginate(page):
 
 @app.route("/delete", methods=["POST"])
 def delete():
-    # Ambil nama file dari form
     filename = request.form.get('filename')
     if filename:
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         if os.path.exists(filepath):
             os.remove(filepath)  # Hapus file
-    return redirect(url_for('index'))  # Kembali ke halaman utama
+            print(f"File {filename} berhasil dihapus")
+    return redirect(url_for('index'))
 
 @app.route("/hasil_svm", methods=["POST", "GET"])
 def hasil_svm():
@@ -172,20 +177,19 @@ def hasil_svm():
 
         # Kembalikan indeks sebagai kolom dan ubah Timestamp ke string
         predictions.reset_index(inplace=True)
-        predictions['index'] = predictions['index'].dt.strftime('%Y-%m-%d')  # Konversi Timestamp ke string
+        predictions['index'] = predictions['index'].dt.strftime('%Y-%m-%d')
 
         # Debugging: Print isi predictions
-        print(predictions.head())  # Pastikan ini menghasilkan format yang benar
+        print(predictions.head())
+
         prediction_records = predictions.to_dict(orient="records")
 
         # Debugging: Print isi setelah to_dict
-        print(prediction_records)  # Pastikan dictionary ini sesuai dengan format yang diharapkan oleh template
+        print(prediction_records)
 
         return render_template("hasil_svm.html", predictions=prediction_records)
 
     return render_template("hasil_svm.html")
-
-
 
 @app.route("/hasil_ann", methods=["POST", "GET"])
 def hasil_ann():
@@ -203,19 +207,19 @@ def hasil_ann():
 
         # Kembalikan indeks sebagai kolom dan ubah Timestamp ke string
         predictions.reset_index(inplace=True)
-        predictions['index'] = predictions['index'].dt.strftime('%Y-%m-%d')  # Konversi Timestamp ke string
+        predictions['index'] = predictions['index'].dt.strftime('%Y-%m-%d')
 
         # Debugging: Print isi predictions
-        print(predictions.head())  # Pastikan ini menghasilkan format yang benar
+        print(predictions.head())
+
         prediction_records = predictions.to_dict(orient="records")
 
         # Debugging: Print isi setelah to_dict
-        print(prediction_records)  # Pastikan dictionary ini sesuai dengan format yang diharapkan oleh template
+        print(prediction_records)
 
         return render_template("hasil_ann.html", predictions=prediction_records)
 
     return render_template("hasil_ann.html")
-
 
 @app.route("/metrics", methods=["GET"])
 def metrics():
