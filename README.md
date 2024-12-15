@@ -34,3 +34,39 @@
 ## **Menggunakan Virtual Environment di VSCode**
 
 Jika kamu menggunakan VSCode, pastikan interpreter Python diatur untuk menggunakan virtual environment yang telah dibuat. Pilih interpreter dengan menekan `Ctrl+Shift+P`, ketik "Python: Select Interpreter", dan pilih `myenv/bin/python`.
+
+## Library yang Digunakan
+
+1. **Flask**  
+   Flask adalah framework micro web untuk Python yang digunakan untuk membangun aplikasi web.
+   
+2. **Pandas**  
+   Pustaka untuk manipulasi dan analisis data, terutama digunakan untuk memanipulasi data dalam format tabel (DataFrame).
+
+3. **OS**  
+   Modul untuk berinteraksi dengan sistem operasi, digunakan untuk menangani path dan operasi file.
+
+4. **NumPy**  
+   Pustaka untuk komputasi numerik dan manipulasi array multidimensi.
+
+5. **Scikit-learn**  
+   Pustaka untuk machine learning. Digunakan untuk standar skala data dan model Support Vector Regression (SVR).
+
+6. **TensorFlow**  
+   Framework open-source untuk deep learning, digunakan untuk membuat dan melatih model neural network.
+
+7. **Keras**  
+   API deep learning tingkat tinggi yang berjalan di atas TensorFlow untuk membangun dan melatih model ANN.
+
+## Install Library dan Menjalankan Code
+Pastikan virtual environment sudah aktif. Kemudian, jalankan perintah berikut untuk menginstal semua pustaka yang dibutuhkan:
+
+```bash
+pip install flask pandas numpy scikit-learn tensorflow
+```
+Kemudian untuk menjalankannya
+```bash
+python app.py
+```
+
+
