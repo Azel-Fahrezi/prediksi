@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h2>Evaluation Metrics</h2>
+    <p>Berikut adalah hasil evaluasi model SVM dan ANN:</p>
+    
+    <h3>Metrics SVM</h3>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Feature</th>
+                <th>MAE</th>
+                <th>MSE</th>
+                <th>R²</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for feature, metric in metrics_svm.items() %}
+            <tr>
+                <td>{{ feature }}</td>
+                <td>{{ metric.MAE }}</td>
+                <td>{{ metric.MSE }}</td>
+                <td>{{ metric.R2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3>Metrics ANN</h3>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Feature</th>
+                <th>MAE</th>
+                <th>MSE</th>
+                <th>R²</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for feature, metric in metrics_ann.items() %}
+            <tr>
+                <td>{{ feature }}</td>
+                <td>{{ metric.MAE }}</td>
+                <td>{{ metric.MSE }}</td>
+                <td>{{ metric.R2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

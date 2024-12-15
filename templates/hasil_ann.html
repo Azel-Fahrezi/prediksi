@@ -1,13 +1,14 @@
 {% extends 'base.html' %}
 {% block content %}
     <h2>Hasil Prediksi Menggunakan ANN</h2>
+
     <!-- Form untuk input jumlah minggu -->
     <form method="POST" action="{{ url_for('hasil_ann') }}">
         <label for="weeks">Masukkan jumlah minggu untuk prediksi:</label>
         <input type="number" id="weeks" name="weeks" min="1" required>
-        <button type="submit">Prediksi SVM</button>
+        <button type="submit">Prediksi ANN</button>
     </form>
-    
+
     <!-- Area untuk menampilkan hasil prediksi -->
     {% if predictions %}
         <h3>Hasil Prediksi:</h3>

@@ -4,6 +4,7 @@ import os
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVR
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.neural_network import MLPRegressor
 
 app = Flask(__name__)
@@ -12,8 +13,10 @@ UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+
 def calculate_svm(dataframe, weeks):
     predictions = {}
+    metrics = {}
     X = np.arange(len(dataframe)).reshape(-1, 1)
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
@@ -22,25 +25,37 @@ def calculate_svm(dataframe, weeks):
         y = dataframe[column].values
         model = SVR(kernel='rbf')
         model.fit(X_scaled, y)
+
+        # Predict future values
         future_index = np.arange(len(dataframe), len(dataframe) + weeks).reshape(-1, 1)
         future_index_scaled = scaler.transform(future_index)
         predictions[column] = model.predict(future_index_scaled)
 
+        # Evaluate model
+        y_pred = model.predict(X_scaled)
+        metrics[column] = {
+            'MAE': mean_absolute_error(y, y_pred),
+            'MSE': mean_squared_error(y, y_pred),
+            'R2': r2_score(y, y_pred)
+        }
+
     future_dates = pd.date_range(start=dataframe.index[-1], periods=weeks + 1, freq='W')[1:]
     prediction_df = pd.DataFrame(predictions, index=future_dates)
-    return prediction_df
+    return prediction_df, metrics
+
 
 def calculate_ann(dataframe, weeks):
     predictions = {}
+    metrics = {}
     X = np.arange(len(dataframe)).reshape(-1, 1)
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
     for column in dataframe.columns:
         y = dataframe[column].values
-        
-        # Define and train MLPRegressor
-        model = MLPRegressor(hidden_layer_sizes=(32, 16), max_iter=500, learning_rate_init=0.01, random_state=0)
+
+        # Create and train ANN model
+        model = MLPRegressor(hidden_layer_sizes=(32, 16), activation='relu', solver='adam', max_iter=500)
         model.fit(X_scaled, y)
 
         # Predict future values
@@ -48,13 +63,23 @@ def calculate_ann(dataframe, weeks):
         future_index_scaled = scaler.transform(future_index)
         predictions[column] = model.predict(future_index_scaled)
 
+        # Evaluate model
+        y_pred = model.predict(X_scaled)
+        metrics[column] = {
+            'MAE': mean_absolute_error(y, y_pred),
+            'MSE': mean_squared_error(y, y_pred),
+            'R2': r2_score(y, y_pred)
+        }
+
     future_dates = pd.date_range(start=dataframe.index[-1], periods=weeks + 1, freq='W')[1:]
     prediction_df = pd.DataFrame(predictions, index=future_dates)
-    return prediction_df
+    return prediction_df, metrics
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
+        # Proses unggah file
         if 'file' not in request.files:
             return "No file part"
         file = request.files['file']
@@ -65,11 +90,13 @@ def index():
         file.save(filepath)
         session['uploaded_file'] = filepath
 
+        # Membaca data CSV
         data = pd.read_csv(filepath)
         data['datum'] = pd.to_datetime(data['datum'])
         return render_template("import.html", tables=[data.to_html(classes='data', header="true", index=False)], file_uploaded=True)
 
     return render_template("import.html", file_uploaded=False)
+
 
 @app.route("/hasil_svm", methods=["GET", "POST"])
 def hasil_svm():
@@ -86,8 +113,9 @@ def hasil_svm():
     data = pd.read_csv(filepath)
     data['datum'] = pd.to_datetime(data['datum'])
     data.set_index('datum', inplace=True)
-    predictions = calculate_svm(data, weeks)
-    return render_template("hasil_svm.html", predictions=[predictions.to_html(classes='data', header="true")])
+    predictions, metrics = calculate_svm(data, weeks)
+    return render_template("hasil_svm.html", predictions=[predictions.to_html(classes='data', header="true")], metrics=metrics)
+
 
 @app.route("/hasil_ann", methods=["GET", "POST"])
 def hasil_ann():
@@ -104,8 +132,26 @@ def hasil_ann():
     data = pd.read_csv(filepath)
     data['datum'] = pd.to_datetime(data['datum'])
     data.set_index('datum', inplace=True)
-    predictions = calculate_ann(data, weeks)
-    return render_template("hasil_ann.html", predictions=[predictions.to_html(classes='data', header="true")])
+    predictions, metrics = calculate_ann(data, weeks)
+    return render_template("hasil_ann.html", predictions=[predictions.to_html(classes='data', header="true")], metrics=metrics)
+
+@app.route("/metrics", methods=["GET"])
+def metrics():
+    filepath = session.get('uploaded_file')
+    if not filepath:
+        return redirect(url_for('index'))
+
+    data = pd.read_csv(filepath)
+    data['datum'] = pd.to_datetime(data['datum'])
+    data.set_index('datum', inplace=True)
+
+    weeks_svm = session.get('weeks_svm', 12)
+    weeks_ann = session.get('weeks_ann', 12)
+
+    _, metrics_svm = calculate_svm(data, weeks_svm)
+    _, metrics_ann = calculate_ann(data, weeks_ann)
+
+    return render_template("metrics.html", metrics_svm=metrics_svm, metrics_ann=metrics_ann)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)

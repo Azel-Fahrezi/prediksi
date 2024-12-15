@@ -45,6 +45,7 @@
         <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">Lihat Data</a>
         <a href="{{ url_for('hasil_svm') }}" class="{% if request.endpoint == 'hasil_svm' %}active{% endif %}">Hasil SVM</a>
         <a href="{{ url_for('hasil_ann') }}" class="{% if request.endpoint == 'hasil_ann' %}active{% endif %}">Hasil ANN</a>
+        <a href="{{ url_for('metrics') }}" class="{% if request.endpoint == 'metrics' %}active{% endif %}">Evaluation Metrics</a>
     </div>
 
     <!-- Main Content -->
