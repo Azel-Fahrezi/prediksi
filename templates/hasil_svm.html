@@ -1,37 +1,42 @@
 {% extends 'base.html' %}
 {% block content %}
-    <h2>Hasil Prediksi Menggunakan SVM</h2>
+    <h2>Hasil Prediksi</h2>
 
-    <!-- Form untuk input jumlah minggu -->
+    <!-- Form untuk input Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya -->
     <form method="POST" action="{{ url_for('hasil_svm') }}">
-        <label for="weeks">Masukkan jumlah minggu untuk prediksi:</label>
-        <input type="number" id="weeks" name="weeks" min="1" required>
+        <label for="Jumlah_Stok">Jumlah Stok:</label>
+        <input type="number" id="Jumlah_Stok" name="Jumlah_Stok" required>
+    
+        <label for="Musim_Periodik">Musim Periodik:</label>
+        <select id="Musim_Periodik" name="Musim_Periodik" required>
+            <option value="Normal">Normal</option>
+            <option value="Liburan">Liburan</option>
+            <option value="Musim Flu">Musim Flu</option>
+        </select>
+    
+        <label for="Penjualan_Sebelumnya">Penjualan Sebelumnya:</label>
+        <input type="number" id="Penjualan_Sebelumnya" name="Penjualan_Sebelumnya" required>
+    
         <button type="submit">Prediksi SVM</button>
-    </form>
+    </form>    
 
     <!-- Area untuk menampilkan hasil prediksi -->
     {% if predictions %}
-        <h3>Hasil Prediksi:</h3>
-        <table class="table table-bordered">
-            <thead>
+    <h3>Hasil Prediksi:</h3>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Prediksi Penjualan</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in predictions %}
                 <tr>
-                    <th>Datum</th>
-                    {% for key in predictions[0].keys() if key != 'index' %}
-                    <th>{{ key }}</th>
-                    {% endfor %}
+                    <td>{{ row['Penjualan_Prediksi'] }}</td>
                 </tr>
-            </thead>
-            <tbody>
-                {% for row in predictions %}
-                <tr>
-                    <td>{{ row['index'] }}</td>
-                    {% for key, value in row.items() if key != 'index' %}
-                    <td>{{ value }}</td>
-                    {% endfor %}
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+            {% endfor %}
+        </tbody>
+    </table>
     {% else %}
         <p>Tidak ada data untuk ditampilkan.</p>
     {% endif %}

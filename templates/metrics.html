@@ -1,49 +1,53 @@
 {% extends 'base.html' %}
 {% block content %}
     <h2>Evaluation Metrics</h2>
-    <p>Berikut adalah hasil evaluasi model SVM dan ANN:</p>
-    
-    <h3>Metrics SVM</h3>
+    <p>Berikut adalah hasil evaluasi untuk model SVM dan ANN yang telah digunakan dalam prediksi penjualan:</p>
+
+    <h3>Metrics Model SVM</h3>
     <table class="table table-bordered">
         <thead>
             <tr>
-                <th>Feature</th>
-                <th>MAE</th>
-                <th>MSE</th>
-                <th>R²</th>
+                <th>Metric</th>
+                <th>Value</th>
             </tr>
         </thead>
         <tbody>
-            {% for feature, metric in metrics_svm.items() %}
             <tr>
-                <td>{{ feature }}</td>
-                <td>{{ metric.MAE }}</td>
-                <td>{{ metric.MSE }}</td>
-                <td>{{ metric.R2 }}</td>
+                <td>MAE (Mean Absolute Error)</td>
+                <td>{{ metrics_svm['SVM']['MAE'] }}</td>
             </tr>
-            {% endfor %}
+            <tr>
+                <td>MSE (Mean Squared Error)</td>
+                <td>{{ metrics_svm['SVM']['MSE'] }}</td>
+            </tr>
+            <tr>
+                <td>R² (R-Squared)</td>
+                <td>{{ metrics_svm['SVM']['R2'] }}</td>
+            </tr>
         </tbody>
     </table>
 
-    <h3>Metrics ANN</h3>
+    <h3>Metrics Model ANN</h3>
     <table class="table table-bordered">
         <thead>
             <tr>
-                <th>Feature</th>
-                <th>MAE</th>
-                <th>MSE</th>
-                <th>R²</th>
+                <th>Metric</th>
+                <th>Value</th>
             </tr>
         </thead>
         <tbody>
-            {% for feature, metric in metrics_ann.items() %}
             <tr>
-                <td>{{ feature }}</td>
-                <td>{{ metric.MAE }}</td>
-                <td>{{ metric.MSE }}</td>
-                <td>{{ metric.R2 }}</td>
+                <td>MAE (Mean Absolute Error)</td>
+                <td>{{ metrics_ann['ANN']['MAE'] }}</td>
             </tr>
-            {% endfor %}
+            <tr>
+                <td>MSE (Mean Squared Error)</td>
+                <td>{{ metrics_ann['ANN']['MSE'] }}</td>
+            </tr>
+            <tr>
+                <td>R² (R-Squared)</td>
+                <td>{{ metrics_ann['ANN']['R2'] }}</td>
+            </tr>
         </tbody>
     </table>
 {% endblock %}

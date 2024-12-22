@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session
 import pandas as pd
 import os
 import numpy as np
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.svm import SVR
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.neural_network import MLPRegressor
@@ -14,66 +14,74 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Fungsi untuk menghitung prediksi SVM
-def calculate_svm(dataframe, weeks):
+def calculate_svm(dataframe, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya):
     predictions = {}
     metrics = {}
-    X = np.arange(len(dataframe)).reshape(-1, 1)
+
+    # Proses Label Encoding untuk Musim_Periodik
+    encoder = LabelEncoder()
+    dataframe['Musim_Periodik'] = encoder.fit_transform(dataframe['Musim_Periodik'])
+    Musim_Periodik_encoded = encoder.transform([Musim_Periodik])[0]
+
+    # Gunakan kolom selain 'datum'
+    X = dataframe[['Jumlah_Stok', 'Musim_Periodik', 'Penjualan_Sebelumnya']].values
+    y = dataframe['Penjualan_Prediksi'].values
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
-    for column in dataframe.columns:
-        y = dataframe[column].values
-        model = SVR(kernel='rbf')
-        model.fit(X_scaled, y)
+    # Model SVM
+    model = SVR(kernel='rbf')
+    model.fit(X_scaled, y)
 
-        # Prediksi nilai di masa depan
-        future_index = np.arange(len(dataframe), len(dataframe) + weeks).reshape(-1, 1)
-        future_index_scaled = scaler.transform(future_index)
-        predictions[column] = model.predict(future_index_scaled)
+    # Prediksi nilai di masa depan
+    future_X = np.array([[Jumlah_Stok, Musim_Periodik_encoded, Penjualan_Sebelumnya]])
+    future_X_scaled = scaler.transform(future_X)
+    predictions['Penjualan_Prediksi'] = model.predict(future_X_scaled)
 
-        # Evaluasi model
-        y_pred = model.predict(X_scaled)
-        metrics[column] = {
-            'MAE': mean_absolute_error(y, y_pred),
-            'MSE': mean_squared_error(y, y_pred),
-            'R2': r2_score(y, y_pred)
-        }
+    # Evaluasi model
+    y_pred = model.predict(X_scaled)
+    metrics['SVM'] = {
+        'MAE': mean_absolute_error(y, y_pred),
+        'MSE': mean_squared_error(y, y_pred),
+        'R2': r2_score(y, y_pred)
+    }
 
-    future_dates = pd.date_range(start=dataframe.index[-1], periods=weeks + 1, freq='W')[1:]
-    prediction_df = pd.DataFrame(predictions, index=future_dates)
-    return prediction_df, metrics
+    return predictions, metrics
 
 # Fungsi untuk menghitung prediksi ANN
-def calculate_ann(dataframe, weeks):
+def calculate_ann(dataframe, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya):
     predictions = {}
     metrics = {}
-    X = np.arange(len(dataframe)).reshape(-1, 1)
+
+    # Proses Label Encoding untuk Musim_Periodik
+    encoder = LabelEncoder()
+    dataframe['Musim_Periodik'] = encoder.fit_transform(dataframe['Musim_Periodik'])
+    Musim_Periodik_encoded = encoder.transform([Musim_Periodik])[0]
+
+    # Gunakan kolom selain 'datum'
+    X = dataframe[['Jumlah_Stok', 'Musim_Periodik', 'Penjualan_Sebelumnya']].values
+    y = dataframe['Penjualan_Prediksi'].values
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
-    for column in dataframe.columns:
-        y = dataframe[column].values
+    # Model ANN
+    model = MLPRegressor(hidden_layer_sizes=(32, 16), activation='relu', solver='adam', max_iter=500)
+    model.fit(X_scaled, y)
 
-        # Membuat dan melatih model ANN
-        model = MLPRegressor(hidden_layer_sizes=(32, 16), activation='relu', solver='adam', max_iter=500)
-        model.fit(X_scaled, y)
+    # Prediksi nilai di masa depan
+    future_X = np.array([[Jumlah_Stok, Musim_Periodik_encoded, Penjualan_Sebelumnya]])
+    future_X_scaled = scaler.transform(future_X)
+    predictions['Penjualan_Prediksi'] = model.predict(future_X_scaled)
 
-        # Prediksi nilai di masa depan
-        future_index = np.arange(len(dataframe), len(dataframe) + weeks).reshape(-1, 1)
-        future_index_scaled = scaler.transform(future_index)
-        predictions[column] = model.predict(future_index_scaled)
+    # Evaluasi model
+    y_pred = model.predict(X_scaled)
+    metrics['ANN'] = {
+        'MAE': mean_absolute_error(y, y_pred),
+        'MSE': mean_squared_error(y, y_pred),
+        'R2': r2_score(y, y_pred)
+    }
 
-        # Evaluasi model
-        y_pred = model.predict(X_scaled)
-        metrics[column] = {
-            'MAE': mean_absolute_error(y, y_pred),
-            'MSE': mean_squared_error(y, y_pred),
-            'R2': r2_score(y, y_pred)
-        }
-
-    future_dates = pd.date_range(start=dataframe.index[-1], periods=weeks + 1, freq='W')[1:]
-    prediction_df = pd.DataFrame(predictions, index=future_dates)
-    return prediction_df, metrics
+    return predictions, metrics
 
 # Variabel global untuk menyimpan data
 uploaded_data = []
@@ -151,16 +159,6 @@ def paginate(page):
         has_prev=has_prev,
     )
 
-@app.route("/delete", methods=["POST"])
-def delete():
-    filename = request.form.get('filename')
-    if filename:
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        if os.path.exists(filepath):
-            os.remove(filepath)  # Hapus file
-            print(f"File {filename} berhasil dihapus")
-    return redirect(url_for('index'))
-
 @app.route("/hasil_svm", methods=["POST", "GET"])
 def hasil_svm():
     filepath = session.get('uploaded_file')
@@ -168,24 +166,19 @@ def hasil_svm():
         return redirect(url_for('index'))
 
     data = pd.read_csv(filepath)
-    data['datum'] = pd.to_datetime(data['datum'])
-    data.set_index('datum', inplace=True)
 
     if request.method == "POST":
-        weeks = int(request.form["weeks"])
-        predictions, _ = calculate_svm(data, weeks)
+        Jumlah_Stok = float(request.form["Jumlah_Stok"])
+        Musim_Periodik = request.form["Musim_Periodik"]  # Tidak diubah menjadi float
+        Penjualan_Sebelumnya = float(request.form["Penjualan_Sebelumnya"])
+
+        predictions, _ = calculate_svm(data, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya)
 
         # Kembalikan indeks sebagai kolom dan ubah Timestamp ke string
-        predictions.reset_index(inplace=True)
-        predictions['index'] = predictions['index'].dt.strftime('%Y-%m-%d')
-
-        # Debugging: Print isi predictions
-        print(predictions.head())
-
-        prediction_records = predictions.to_dict(orient="records")
-
-        # Debugging: Print isi setelah to_dict
-        print(prediction_records)
+        prediction_records = [{
+            'index': 'Prediksi',
+            'Penjualan_Prediksi': predictions['Penjualan_Prediksi'][0]
+        }]
 
         return render_template("hasil_svm.html", predictions=prediction_records)
 
@@ -198,24 +191,19 @@ def hasil_ann():
         return redirect(url_for('index'))
 
     data = pd.read_csv(filepath)
-    data['datum'] = pd.to_datetime(data['datum'])
-    data.set_index('datum', inplace=True)
 
     if request.method == "POST":
-        weeks = int(request.form["weeks"])
-        predictions, _ = calculate_ann(data, weeks)
+        Jumlah_Stok = float(request.form["Jumlah_Stok"])
+        Musim_Periodik = request.form["Musim_Periodik"]  # Tidak diubah menjadi float
+        Penjualan_Sebelumnya = float(request.form["Penjualan_Sebelumnya"])
+
+        predictions, _ = calculate_ann(data, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya)
 
         # Kembalikan indeks sebagai kolom dan ubah Timestamp ke string
-        predictions.reset_index(inplace=True)
-        predictions['index'] = predictions['index'].dt.strftime('%Y-%m-%d')
-
-        # Debugging: Print isi predictions
-        print(predictions.head())
-
-        prediction_records = predictions.to_dict(orient="records")
-
-        # Debugging: Print isi setelah to_dict
-        print(prediction_records)
+        prediction_records = [{
+            'index': 'Prediksi',
+            'Penjualan_Prediksi': predictions['Penjualan_Prediksi'][0]
+        }]
 
         return render_template("hasil_ann.html", predictions=prediction_records)
 
@@ -228,16 +216,11 @@ def metrics():
         return redirect(url_for('index'))
 
     data = pd.read_csv(filepath)
-    data['datum'] = pd.to_datetime(data['datum'])
-    data.set_index('datum', inplace=True)
 
-    weeks_svm = session.get('weeks_svm', 12)
-    weeks_ann = session.get('weeks_ann', 12)
-
-    _, metrics_svm = calculate_svm(data, weeks_svm)
-    _, metrics_ann = calculate_ann(data, weeks_ann)
+    _, metrics_svm = calculate_svm(data, 0, 'Normal', 0)  # Update sesuai dengan data yang Anda punya
+    _, metrics_ann = calculate_ann(data, 0, 'Normal', 0)  # Update sesuai dengan data yang Anda punya
 
     return render_template("metrics.html", metrics_svm=metrics_svm, metrics_ann=metrics_ann)
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    app.run(debug=True)
