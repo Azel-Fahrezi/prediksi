@@ -52,17 +52,11 @@ Jika kamu menggunakan VSCode, pastikan interpreter Python diatur untuk menggunak
 5. **Scikit-learn**  
    Pustaka untuk machine learning. Digunakan untuk standar skala data dan model Support Vector Regression (SVR).
 
-6. **TensorFlow**  
-   Framework open-source untuk deep learning, digunakan untuk membuat dan melatih model neural network.
-
-7. **Keras**  
-   API deep learning tingkat tinggi yang berjalan di atas TensorFlow untuk membangun dan melatih model ANN.
-
 ## Install Library dan Menjalankan Code
 Pastikan virtual environment sudah aktif. Kemudian, jalankan perintah berikut untuk menginstal semua pustaka yang dibutuhkan:
 
 ```bash
-pip install flask pandas numpy scikit-learn tensorflow
+pip install flask pandas numpy scikit-learn
 ```
 Kemudian untuk menjalankannya
 ```bash
