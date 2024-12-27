@@ -53,23 +53,26 @@ def calculate_ann(dataframe, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya):
     predictions = {}
     metrics = {}
 
-    # Proses Label Encoding untuk Musim_Periodik
+    # Validasi apakah kolom yang diperlukan ada
+    required_columns = ['Jumlah_Stok', 'Musim_Periodik', 'Penjualan_Sebelumnya', 'Penjualan_Prediksi']
+    for col in required_columns:
+        if col not in dataframe.columns:
+            raise ValueError(f"Kolom '{col}' tidak ditemukan dalam dataframe")
+
+    # Label Encoding untuk Musim_Periodik
     encoder = LabelEncoder()
-    # Pastikan hanya melakukan fit_transform jika data Musim_Periodik sudah ada
-    if 'Musim_Periodik' not in dataframe.columns:
-        raise ValueError("Kolom 'Musim_Periodik' tidak ditemukan dalam dataframe")
-    
     dataframe['Musim_Periodik'] = encoder.fit_transform(dataframe['Musim_Periodik'])
-    
-    # Jika Musim_Periodik ada dalam kategori baru, maka handle itu
+
+    # Tambahkan kategori baru jika Musim_Periodik input tidak ada di data pelatihan
     if Musim_Periodik not in encoder.classes_:
-        raise ValueError(f"Kategori '{Musim_Periodik}' tidak ditemukan dalam data pelatihan")
-    
+        encoder.classes_ = np.append(encoder.classes_, Musim_Periodik)
+
     Musim_Periodik_encoded = encoder.transform([Musim_Periodik])[0]
 
-    # Gunakan kolom selain 'datum'
+    # Gunakan kolom untuk fitur dan target
     X = dataframe[['Jumlah_Stok', 'Musim_Periodik', 'Penjualan_Sebelumnya']].values
     y = dataframe['Penjualan_Prediksi'].values
+
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
@@ -119,11 +122,20 @@ def index():
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
             file.save(filepath)
 
+            # Membaca data CSV
+            df = pd.read_csv(filepath)
+            
+            # Validasi kolom yang diperlukan
+            required_columns = ['Jumlah_Stok', 'Musim_Periodik', 'Penjualan_Sebelumnya', 'Penjualan_Prediksi']
+            for col in required_columns:
+                if col not in df.columns:
+                    return f"Kolom '{col}' tidak ditemukan dalam file yang diunggah. Pastikan file memiliki kolom: {', '.join(required_columns)}."
+
             # Simpan ke session
             session['uploaded_file'] = filepath
 
-            # Membaca data CSV dan mengonversinya ke dictionary
-            uploaded_data = pd.read_csv(filepath).to_dict(orient='records')
+            # Konversi data CSV ke dictionary
+            uploaded_data = df.to_dict(orient='records')
             filename = file.filename
 
             return redirect(url_for('paginate', page=1))
@@ -168,60 +180,37 @@ def paginate(page):
         has_prev=has_prev,
     )
 
-@app.route("/hasil_svm", methods=["POST", "GET"])
-def hasil_svm():
+@app.route("/testing", methods=["POST", "GET"])
+def testing():
     filepath = session.get('uploaded_file')
     if not filepath:
         return redirect(url_for('index'))
 
     data = pd.read_csv(filepath)
 
-    if request.method == "POST":
-        Jumlah_Stok = float(request.form["Jumlah_Stok"])
-        Musim_Periodik = request.form["Musim_Periodik"]  # Tidak diubah menjadi float
-        Penjualan_Sebelumnya = float(request.form["Penjualan_Sebelumnya"])
-
-        predictions, _ = calculate_svm(data, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya)
-
-        # Kembalikan indeks sebagai kolom dan ubah Timestamp ke string
-        prediction_records = [{
-            'index': 'Prediksi',
-            'Penjualan_Prediksi': predictions['Penjualan_Prediksi'][0]
-        }]
-
-        return render_template("hasil_svm.html", predictions=prediction_records)
-
-    return render_template("hasil_svm.html")
-
-@app.route("/hasil_ann", methods=["POST", "GET"])
-def hasil_ann():
-    filepath = session.get('uploaded_file')
-    if not filepath:
-        return redirect(url_for('index'))
-
-    data = pd.read_csv(filepath)
+    predictions_svm = None
+    predictions_ann = None
 
     if request.method == "POST":
         try:
             Jumlah_Stok = float(request.form["Jumlah_Stok"])
-            Musim_Periodik = request.form["Musim_Periodik"]  # Nilai Musim_Periodik tetap string
+            Musim_Periodik = request.form["Musim_Periodik"]
             Penjualan_Sebelumnya = float(request.form["Penjualan_Sebelumnya"])
 
-            predictions, _ = calculate_ann(data, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya)
+            # Hitung prediksi untuk SVM
+            predictions_svm, _ = calculate_svm(data, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya)
 
-            # Kembalikan hasil prediksi dalam bentuk record
-            prediction_records = [{
-                'index': 'Prediksi',
-                'Penjualan_Prediksi': predictions['Penjualan_Prediksi'][0]
-            }]
+            # Hitung prediksi untuk ANN
+            predictions_ann, _ = calculate_ann(data, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya)
 
-            return render_template("hasil_ann.html", predictions=prediction_records)
+            return render_template("testing.html", 
+                                   predictions_svm=predictions_svm, 
+                                   predictions_ann=predictions_ann)
 
         except ValueError as e:
-            # Jika ada kesalahan dalam proses, misalnya kategori tidak ditemukan
-            return render_template("hasil_ann.html", error_message=str(e))
+            return render_template("testing.html", error_message=str(e))
 
-    return render_template("hasil_ann.html")
+    return render_template("testing.html")
 
 @app.route("/metrics", methods=["GET"])
 def metrics():

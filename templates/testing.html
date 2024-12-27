@@ -3,7 +3,7 @@
     <h2>Hasil Prediksi</h2>
 
     <!-- Form untuk input Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya -->
-    <form method="POST" action="{{ url_for('hasil_ann') }}">
+    <form method="POST" action="{{ url_for('testing') }}">
         <label for="Jumlah_Stok">Jumlah Stok:</label>
         <input type="number" id="Jumlah_Stok" name="Jumlah_Stok" required>
     
@@ -17,24 +17,32 @@
         <label for="Penjualan_Sebelumnya">Penjualan Sebelumnya:</label>
         <input type="number" id="Penjualan_Sebelumnya" name="Penjualan_Sebelumnya" required>
     
-        <button type="submit">Prediksi ANN</button>
+        <button type="submit">Prediksi</button>
     </form>    
 
     <!-- Area untuk menampilkan hasil prediksi -->
-    {% if predictions %}
+    {% if predictions_svm or predictions_ann %}
     <h3>Hasil Prediksi:</h3>
     <table class="table table-bordered">
         <thead>
             <tr>
+                <th>Model</th>
                 <th>Prediksi Penjualan</th>
             </tr>
         </thead>
         <tbody>
-            {% for row in predictions %}
+            {% if predictions_svm %}
                 <tr>
-                    <td>{{ row['Penjualan_Prediksi'] }}</td>
+                    <td>SVM</td>
+                    <td>{{ predictions_svm['Penjualan_Prediksi'] }}</td>
                 </tr>
-            {% endfor %}
+            {% endif %}
+            {% if predictions_ann %}
+                <tr>
+                    <td>ANN</td>
+                    <td>{{ predictions_ann['Penjualan_Prediksi'] }}</td>
+                </tr>
+            {% endif %}
         </tbody>
     </table>
     {% else %}
