@@ -56,9 +56,9 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <h4>Prediksi Data</h4>
-        <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">Data Training</a>
+        <a href="{{ url_for('metrics') }}" class="{% if request.endpoint == 'metrics' %}active{% endif %}">Training</a>
+        <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">Validasi</a>
         <a href="{{ url_for('testing') }}" class="{% if request.endpoint == 'testing' %}active{% endif %}">Testing</a>
-        <a href="{{ url_for('metrics') }}" class="{% if request.endpoint == 'metrics' %}active{% endif %}">Evaluation Metrics</a>
     </div>
 
     <!-- Main Content -->
