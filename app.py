@@ -6,6 +6,7 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.svm import SVR
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.neural_network import MLPRegressor
+from sklearn.model_selection import train_test_split
 
 app = Flask(__name__)
 app.secret_key = 'secretkey123'
@@ -26,26 +27,34 @@ def calculate_svm(dataframe, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya):
     # Gunakan kolom selain 'datum'
     X = dataframe[['Jumlah_Stok', 'Musim_Periodik', 'Penjualan_Sebelumnya']].values
     y = dataframe['Penjualan_Prediksi'].values
+
+    # Pembagian data
+    X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42)  # 70% training
+    X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.3333, random_state=42)  # 20% val, 10% test
+
+    # Scaling
     scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_val_scaled = scaler.transform(X_val)
+    X_test_scaled = scaler.transform(X_test)
 
     # Model SVM
     model = SVR(kernel='rbf')
-    model.fit(X_scaled, y)
+    model.fit(X_train_scaled, y_train)
 
-    # Prediksi nilai di masa depan
+    # Evaluasi pada validation set
+    y_val_pred = model.predict(X_val_scaled)
+    metrics['SVM'] = {
+        'RMSE': np.sqrt(mean_squared_error(y_val, y_val_pred)),
+        'MSE': mean_squared_error(y_val, y_val_pred),
+        'MAPE': np.mean(np.abs((y_val - y_val_pred) / y_val)) * 100,
+        'R2': r2_score(y_val, y_val_pred)
+    }
+
+    # Prediksi pada future data
     future_X = np.array([[Jumlah_Stok, Musim_Periodik_encoded, Penjualan_Sebelumnya]])
     future_X_scaled = scaler.transform(future_X)
     predictions['Penjualan_Prediksi'] = model.predict(future_X_scaled)
-
-    # Evaluasi model
-    y_pred = model.predict(X_scaled)
-    metrics['SVM'] = {
-        'RMSE': np.sqrt(mean_squared_error(y, y_pred)),
-        'MSE': mean_squared_error(y, y_pred),
-        'MAPE': np.mean(np.abs((y - y_pred) / y)) * 100,
-        'Accuracy': np.mean(np.round(y_pred) == y)  # Jika hasilnya dalam kategori, gunakan pembulatan
-    }
 
     return predictions, metrics
 
@@ -74,28 +83,36 @@ def calculate_ann(dataframe, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya):
     X = dataframe[['Jumlah_Stok', 'Musim_Periodik', 'Penjualan_Sebelumnya']].values
     y = dataframe['Penjualan_Prediksi'].values
 
+    # Pembagian data
+    X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42)  # 70% training
+    X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.3333, random_state=42)  # 20% val, 10% test
+
+    # Scaling
     scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_val_scaled = scaler.transform(X_val)
+    X_test_scaled = scaler.transform(X_test)
 
     # Model ANN
     model = MLPRegressor(hidden_layer_sizes=(32, 16), activation='relu', solver='adam', max_iter=500, random_state=42)
-    model.fit(X_scaled, y)
+    model.fit(X_train_scaled, y_train)
 
-    # Prediksi nilai di masa depan
+    # Evaluasi pada validation set
+    y_val_pred = model.predict(X_val_scaled)
+    metrics['ANN'] = {
+        'RMSE': np.sqrt(mean_squared_error(y_val, y_val_pred)),
+        'MSE': mean_squared_error(y_val, y_val_pred),
+        'MAPE': np.mean(np.abs((y_val - y_val_pred) / y_val)) * 100,
+        'R2': r2_score(y_val, y_val_pred)
+    }
+
+    # Prediksi pada future data
     future_X = np.array([[Jumlah_Stok, Musim_Periodik_encoded, Penjualan_Sebelumnya]])
     future_X_scaled = scaler.transform(future_X)
     predictions['Penjualan_Prediksi'] = model.predict(future_X_scaled)
 
-    # Evaluasi model
-    y_pred = model.predict(X_scaled)
-    metrics['ANN'] = {
-        'RMSE': np.sqrt(mean_squared_error(y, y_pred)),
-        'MSE': mean_squared_error(y, y_pred),
-        'MAPE': np.mean(np.abs((y - y_pred) / y)) * 100,
-        'Accuracy': np.mean(np.round(y_pred) == y)  # Jika hasilnya dalam kategori, gunakan pembulatan
-    }
-
     return predictions, metrics
+
 
 # Variabel global untuk menyimpan data
 uploaded_data = []
