@@ -5,62 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prediksi Data</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <style>
-        body {
-            display: flex;
-            min-height: 100vh;
-            margin: 0;
-        }
-        .sidebar {
-            background-color: #343a40;
-            color: #fff;
-            min-width: 250px;
-            padding: 20px;
-        }
-        .sidebar h4 {
-            margin-bottom: 20px;
-        }
-        .sidebar a {
-            color: #fff;
-            text-decoration: none;
-            display: block;
-            padding: 10px;
-            border-radius: 5px;
-            transition: background 0.3s ease;
-        }
-        .sidebar a:hover, .sidebar a.active {
-            background-color: #495057;
-        }
-        .content {
-            flex-grow: 1;
-            padding: 20px;
-            background-color: #f8f9fa;
-        }
-        .table {
-        font-size: 14px;
-        text-align: center;
-        }
-        .table th {
-            background-color: #6c95c0;
-            color: white;
-        }
-        .table-hover tbody tr:hover {
-            background-color: #f1f1f1;
-        }
-        .table-responsive {
-            margin-top: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
     <!-- Sidebar -->
-    <div class="sidebar">
-        <h4>Prediksi Data</h4>
-        <a href="{{ url_for('metrics') }}" class="{% if request.endpoint == 'metrics' %}active{% endif %}">Training</a>
-        <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">Validasi</a>
-        <a href="{{ url_for('testing') }}" class="{% if request.endpoint == 'testing' %}active{% endif %}">Testing</a>
-    </div>
-
+    {% include 'sidebar.html' %}
+    
     <!-- Main Content -->
     <div class="content">
         {% block content %}
