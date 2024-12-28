@@ -7,6 +7,7 @@ from sklearn.svm import SVR
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.neural_network import MLPRegressor
 from sklearn.model_selection import train_test_split
+import uuid
 
 app = Flask(__name__)
 app.secret_key = 'secretkey123'
