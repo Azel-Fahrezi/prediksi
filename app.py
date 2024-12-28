@@ -115,18 +115,22 @@ def calculate_ann(dataframe, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya):
 
 
 # Variabel global untuk menyimpan data
-uploaded_data = []
-filename = ""
-
 @app.route("/", methods=["GET", "POST"])
 def index():
     global uploaded_data, filename
 
     # Periksa apakah file sudah ada di session
     if 'uploaded_file' in session:
-        uploaded_data = pd.read_csv(session['uploaded_file']).to_dict(orient='records')
-        filename = session.get('uploaded_file').split('/')[-1]
-        return redirect(url_for('paginate', page=1))
+        try:
+            uploaded_data = pd.read_csv(session['uploaded_file']).to_dict(orient='records')
+            filename = session.get('uploaded_file').split('/')[-1]
+            return redirect(url_for('paginate', page=1))
+        except Exception as e:
+            # Jika terjadi error saat membaca file, reset session
+            session.pop('uploaded_file', None)
+            uploaded_data = []
+            filename = ""
+            return f"Error membaca file dari session: {str(e)}"
 
     if request.method == "POST":
         action = request.form.get('action')
@@ -138,31 +142,41 @@ def index():
             if file.filename == '':
                 return "No file selected"
 
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            # Buat nama file unik untuk menghindari konflik
+            unique_filename = f"{uuid.uuid4().hex}_{file.filename}"
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
             file.save(filepath)
 
-            # Membaca data CSV
-            df = pd.read_csv(filepath)
-            
-            # Validasi kolom yang diperlukan
-            required_columns = ['Jumlah_Stok', 'Musim_Periodik', 'Penjualan_Sebelumnya', 'Penjualan_Prediksi']
-            for col in required_columns:
-                if col not in df.columns:
-                    return f"Kolom '{col}' tidak ditemukan dalam file yang diunggah. Pastikan file memiliki kolom: {', '.join(required_columns)}."
+            try:
+                # Membaca data CSV
+                df = pd.read_csv(filepath)
+                
+                # Validasi kolom yang diperlukan
+                required_columns = ['Jumlah_Stok', 'Musim_Periodik', 'Penjualan_Sebelumnya', 'Penjualan_Prediksi']
+                if not all(col in df.columns for col in required_columns):
+                    os.remove(filepath)  # Hapus file jika validasi gagal
+                    return f"Kolom yang diperlukan tidak ditemukan. Pastikan file memiliki kolom: {', '.join(required_columns)}."
 
-            # Simpan ke session
-            session['uploaded_file'] = filepath
+                # Simpan file ke session
+                session['uploaded_file'] = filepath
 
-            # Konversi data CSV ke dictionary
-            uploaded_data = df.to_dict(orient='records')
-            filename = file.filename
+                # Konversi data CSV ke dictionary
+                uploaded_data = df.to_dict(orient='records')
+                filename = file.filename
 
-            return redirect(url_for('paginate', page=1))
+                return redirect(url_for('paginate', page=1))
+            except Exception as e:
+                os.remove(filepath)  # Hapus file jika terjadi error
+                return f"Error membaca file: {str(e)}"
 
         elif action == "delete":
+            # Hapus file dari session dan memori
             uploaded_data = []
             filename = ""
-            session.pop('uploaded_file', None)  # Hapus data session
+            if 'uploaded_file' in session:
+                filepath = session.pop('uploaded_file', None)
+                if filepath and os.path.exists(filepath):
+                    os.remove(filepath)  # Hapus file dari disk
             return render_template("import.html", file_uploaded=False)
 
     return render_template("import.html", file_uploaded=False)
