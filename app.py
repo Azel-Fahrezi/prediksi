@@ -259,5 +259,31 @@ def metrics():
 
     return render_template("metrics.html", metrics_svm=metrics_svm, metrics_ann=metrics_ann)
 
+@app.route('/delete_file/<file_name>', methods=['POST'])
+def delete_file(file_name):
+    try:
+        # Pastikan folder uploads didefinisikan
+        upload_folder = app.config['UPLOAD_FOLDER']
+        file_path = os.path.join(upload_folder, file_name)
+
+        # Validasi apakah file ada
+        if os.path.exists(file_path):
+            # Hapus file
+            os.remove(file_path)
+
+            # Hapus data dari session
+            session.pop('uploaded_file', None)
+
+            # Reset variabel data
+            global uploaded_data, filename
+            uploaded_data = []
+            filename = ""
+
+            return redirect(url_for('index'))
+        else:
+            return f"File {file_name} tidak ditemukan.", 404
+    except Exception as e:
+        return f"Terjadi kesalahan: {e}", 500
+
 if __name__ == "__main__":
     app.run(debug=True)
