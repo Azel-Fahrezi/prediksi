@@ -1,53 +1,58 @@
 {% extends 'base.html' %}
 {% block content %}
-    <h2>Evaluation Metrics</h2>
-    <p>Berikut adalah hasil evaluasi untuk model SVM dan ANN yang telah digunakan dalam prediksi penjualan:</p>
+<h3>Metrik Model SVM</h3>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Metric</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>RMSE (Root Mean Squared Error)</td>
+            <td>{{ metrics_svm['SVM']['RMSE'] }}</td>
+        </tr>
+        <tr>
+            <td>MSE (Mean Squared Error)</td>
+            <td>{{ metrics_svm['SVM']['MSE'] }}</td>
+        </tr>
+        <tr>
+            <td>MAPE (Mean Absolute Percentage Error)</td>
+            <td>{{ metrics_svm['SVM']['MAPE'] }}</td>
+        </tr>
+        <tr>
+            <td>Accuracy</td>
+            <td>{{ metrics_svm['SVM']['Accuracy'] }}</td>
+        </tr>
+    </tbody>
+</table>
 
-    <h3>Metrics Model SVM</h3>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Metric</th>
-                <th>Value</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>MAE (Mean Absolute Error)</td>
-                <td>{{ metrics_svm['SVM']['MAE'] }}</td>
-            </tr>
-            <tr>
-                <td>MSE (Mean Squared Error)</td>
-                <td>{{ metrics_svm['SVM']['MSE'] }}</td>
-            </tr>
-            <tr>
-                <td>R² (R-Squared)</td>
-                <td>{{ metrics_svm['SVM']['R2'] }}</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <h3>Metrics Model ANN</h3>
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Metric</th>
-                <th>Value</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>MAE (Mean Absolute Error)</td>
-                <td>{{ metrics_ann['ANN']['MAE'] }}</td>
-            </tr>
-            <tr>
-                <td>MSE (Mean Squared Error)</td>
-                <td>{{ metrics_ann['ANN']['MSE'] }}</td>
-            </tr>
-            <tr>
-                <td>R² (R-Squared)</td>
-                <td>{{ metrics_ann['ANN']['R2'] }}</td>
-            </tr>
-        </tbody>
-    </table>
+<h3>Metrik Model ANN</h3>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Metric</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>RMSE (Root Mean Squared Error)</td>
+            <td>{{ metrics_ann['ANN']['RMSE'] }}</td>
+        </tr>
+        <tr>
+            <td>MSE (Mean Squared Error)</td>
+            <td>{{ metrics_ann['ANN']['MSE'] }}</td>
+        </tr>
+        <tr>
+            <td>MAPE (Mean Absolute Percentage Error)</td>
+            <td>{{ metrics_ann['ANN']['MAPE'] }}</td>
+        </tr>
+        <tr>
+            <td>Accuracy</td>
+            <td>{{ metrics_ann['ANN']['Accuracy'] }}</td>
+        </tr>
+    </tbody>
+</table>
 {% endblock %}

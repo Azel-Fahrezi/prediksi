@@ -41,9 +41,10 @@ def calculate_svm(dataframe, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya):
     # Evaluasi model
     y_pred = model.predict(X_scaled)
     metrics['SVM'] = {
-        'MAE': mean_absolute_error(y, y_pred),
+        'RMSE': np.sqrt(mean_squared_error(y, y_pred)),
         'MSE': mean_squared_error(y, y_pred),
-        'R2': r2_score(y, y_pred)
+        'MAPE': np.mean(np.abs((y - y_pred) / y)) * 100,
+        'Accuracy': np.mean(np.round(y_pred) == y)  # Jika hasilnya dalam kategori, gunakan pembulatan
     }
 
     return predictions, metrics
@@ -88,9 +89,10 @@ def calculate_ann(dataframe, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya):
     # Evaluasi model
     y_pred = model.predict(X_scaled)
     metrics['ANN'] = {
-        'MAE': mean_absolute_error(y, y_pred),
+        'RMSE': np.sqrt(mean_squared_error(y, y_pred)),
         'MSE': mean_squared_error(y, y_pred),
-        'R2': r2_score(y, y_pred)
+        'MAPE': np.mean(np.abs((y - y_pred) / y)) * 100,
+        'Accuracy': np.mean(np.round(y_pred) == y)  # Jika hasilnya dalam kategori, gunakan pembulatan
     }
 
     return predictions, metrics
