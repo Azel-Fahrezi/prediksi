@@ -1,57 +1,80 @@
 {% extends 'base.html' %}
 {% block content %}
-<h3>Metrik Model SVM</h3>
+<h3>Metrik Evaluasi Model</h3>
+<hr>
+
+<h4>SVM Metrics</h4>
 <table class="table table-bordered">
     <thead>
         <tr>
             <th>Metric</th>
-            <th>Value</th>
+            <th>Training</th>
+            <th>Validation</th>
+            <th>Difference (%)</th>
         </tr>
     </thead>
     <tbody>
         <tr>
             <td>RMSE (Root Mean Squared Error)</td>
-            <td>{{ metrics_svm['SVM']['RMSE'] }}</td>
+            <td>{{ metrics_svm['Training']['RMSE'] }}</td>
+            <td>{{ metrics_svm['Validation']['RMSE'] }}</td>
+            <td>{{ ((metrics_svm['Validation']['RMSE'] - metrics_svm['Training']['RMSE']) / metrics_svm['Training']['RMSE']) * 100 | round(2) }}</td>
         </tr>
         <tr>
             <td>MSE (Mean Squared Error)</td>
-            <td>{{ metrics_svm['SVM']['MSE'] }}</td>
+            <td>{{ metrics_svm['Training']['MSE'] }}</td>
+            <td>{{ metrics_svm['Validation']['MSE'] }}</td>
+            <td>{{ ((metrics_svm['Validation']['MSE'] - metrics_svm['Training']['MSE']) / metrics_svm['Training']['MSE']) * 100 | round(2) }}</td>
         </tr>
         <tr>
             <td>MAPE (Mean Absolute Percentage Error)</td>
-            <td>{{ metrics_svm['SVM']['MAPE'] }}</td>
+            <td>{{ metrics_svm['Training']['MAPE'] }}</td>
+            <td>{{ metrics_svm['Validation']['MAPE'] }}</td>
+            <td>{{ ((metrics_svm['Validation']['MAPE'] - metrics_svm['Training']['MAPE']) / metrics_svm['Training']['MAPE']) * 100 | round(2) }}</td>
         </tr>
         <tr>
-            <td>Accuracy</td>
-            <td>{{ metrics_svm['SVM']['Accuracy'] }}</td>
+            <td>R² Score (Accuracy)</td>
+            <td>{{ metrics_svm['Training']['R2'] }}</td>
+            <td>{{ metrics_svm['Validation']['R2'] }}</td>
+            <td>{{ ((metrics_svm['Validation']['R2'] - metrics_svm['Training']['R2']) / metrics_svm['Training']['R2']) * 100 | round(2) }}</td>
         </tr>
     </tbody>
 </table>
 
-<h3>Metrik Model ANN</h3>
+<h4>ANN Metrics</h4>
 <table class="table table-bordered">
     <thead>
         <tr>
             <th>Metric</th>
-            <th>Value</th>
+            <th>Training</th>
+            <th>Validation</th>
+            <th>Difference (%)</th>
         </tr>
     </thead>
     <tbody>
         <tr>
             <td>RMSE (Root Mean Squared Error)</td>
-            <td>{{ metrics_ann['ANN']['RMSE'] }}</td>
+            <td>{{ metrics_ann['Training']['RMSE'] }}</td>
+            <td>{{ metrics_ann['Validation']['RMSE'] }}</td>
+            <td>{{ ((metrics_ann['Validation']['RMSE'] - metrics_ann['Training']['RMSE']) / metrics_ann['Training']['RMSE']) * 100 | round(2) }}</td>
         </tr>
         <tr>
             <td>MSE (Mean Squared Error)</td>
-            <td>{{ metrics_ann['ANN']['MSE'] }}</td>
+            <td>{{ metrics_ann['Training']['MSE'] }}</td>
+            <td>{{ metrics_ann['Validation']['MSE'] }}</td>
+            <td>{{ ((metrics_ann['Validation']['MSE'] - metrics_ann['Training']['MSE']) / metrics_ann['Training']['MSE']) * 100 | round(2) }}</td>
         </tr>
         <tr>
             <td>MAPE (Mean Absolute Percentage Error)</td>
-            <td>{{ metrics_ann['ANN']['MAPE'] }}</td>
+            <td>{{ metrics_ann['Training']['MAPE'] }}</td>
+            <td>{{ metrics_ann['Validation']['MAPE'] }}</td>
+            <td>{{ ((metrics_ann['Validation']['MAPE'] - metrics_ann['Training']['MAPE']) / metrics_ann['Training']['MAPE']) * 100 | round(2) }}</td>
         </tr>
         <tr>
-            <td>Accuracy</td>
-            <td>{{ metrics_ann['ANN']['Accuracy'] }}</td>
+            <td>R² Score (Accuracy)</td>
+            <td>{{ metrics_ann['Training']['R2'] }}</td>
+            <td>{{ metrics_ann['Validation']['R2'] }}</td>
+            <td>{{ ((metrics_ann['Validation']['R2'] - metrics_ann['Training']['R2']) / metrics_ann['Training']['R2']) * 100 | round(2) }}</td>
         </tr>
     </tbody>
 </table>

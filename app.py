@@ -16,16 +16,16 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Fungsi untuk menghitung prediksi SVM
-def calculate_svm(dataframe, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya):
+def calculate_svm(dataframe, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya, max_iter, target_accuracy):
     predictions = {}
     metrics = {}
 
-    # Proses Label Encoding untuk Musim_Periodik
+    # Label Encoding untuk Musim_Periodik
     encoder = LabelEncoder()
     dataframe['Musim_Periodik'] = encoder.fit_transform(dataframe['Musim_Periodik'])
     Musim_Periodik_encoded = encoder.transform([Musim_Periodik])[0]
 
-    # Gunakan kolom selain 'datum'
+    # Fitur dan target
     X = dataframe[['Jumlah_Stok', 'Musim_Periodik', 'Penjualan_Sebelumnya']].values
     y = dataframe['Penjualan_Prediksi'].values
 
@@ -33,23 +33,39 @@ def calculate_svm(dataframe, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya):
     X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42)  # 70% training
     X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.3333, random_state=42)  # 20% val, 10% test
 
-    # Scaling
+    # Scaling data
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_val_scaled = scaler.transform(X_val)
     X_test_scaled = scaler.transform(X_test)
 
-    # Model SVM
-    model = SVR(kernel='rbf')
-    model.fit(X_train_scaled, y_train)
+    # Inisialisasi model
+    model = SVR(kernel='rbf', max_iter=max_iter)
 
-    # Evaluasi pada validation set
-    y_val_pred = model.predict(X_val_scaled)
+    for i in range(max_iter):
+        model.fit(X_train_scaled, y_train)
+        y_val_pred = model.predict(X_val_scaled)
+        accuracy = r2_score(y_val, y_val_pred) * 100
+
+        if accuracy >= target_accuracy:
+            break
+
+    # Evaluasi pada training set
+    y_train_pred = model.predict(X_train_scaled)
+
     metrics['SVM'] = {
-        'RMSE': np.sqrt(mean_squared_error(y_val, y_val_pred)),
-        'MSE': mean_squared_error(y_val, y_val_pred),
-        'MAPE': np.mean(np.abs((y_val - y_val_pred) / y_val)) * 100,
-        'R2': r2_score(y_val, y_val_pred)
+        'Training': {
+            'RMSE': np.sqrt(mean_squared_error(y_train, y_train_pred)),
+            'MSE': mean_squared_error(y_train, y_train_pred),
+            'MAPE': np.mean(np.abs((y_train - y_train_pred) / y_train)) * 100,
+            'R2': r2_score(y_train, y_train_pred)
+        },
+        'Validation': {
+            'RMSE': np.sqrt(mean_squared_error(y_val, y_val_pred)),
+            'MSE': mean_squared_error(y_val, y_val_pred),
+            'MAPE': np.mean(np.abs((y_val - y_val_pred) / y_val)) * 100,
+            'R2': r2_score(y_val, y_val_pred)
+        }
     }
 
     # Prediksi pada future data
@@ -60,27 +76,20 @@ def calculate_svm(dataframe, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya):
     return predictions, metrics
 
 # Fungsi untuk menghitung prediksi ANN
-def calculate_ann(dataframe, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya):
+def calculate_ann(dataframe, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya, max_iter, target_accuracy):
     predictions = {}
     metrics = {}
-
-    # Validasi apakah kolom yang diperlukan ada
-    required_columns = ['Jumlah_Stok', 'Musim_Periodik', 'Penjualan_Sebelumnya', 'Penjualan_Prediksi']
-    for col in required_columns:
-        if col not in dataframe.columns:
-            raise ValueError(f"Kolom '{col}' tidak ditemukan dalam dataframe")
 
     # Label Encoding untuk Musim_Periodik
     encoder = LabelEncoder()
     dataframe['Musim_Periodik'] = encoder.fit_transform(dataframe['Musim_Periodik'])
 
-    # Tambahkan kategori baru jika Musim_Periodik input tidak ada di data pelatihan
     if Musim_Periodik not in encoder.classes_:
         encoder.classes_ = np.append(encoder.classes_, Musim_Periodik)
 
     Musim_Periodik_encoded = encoder.transform([Musim_Periodik])[0]
 
-    # Gunakan kolom untuk fitur dan target
+    # Fitur dan target
     X = dataframe[['Jumlah_Stok', 'Musim_Periodik', 'Penjualan_Sebelumnya']].values
     y = dataframe['Penjualan_Prediksi'].values
 
@@ -88,23 +97,38 @@ def calculate_ann(dataframe, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya):
     X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42)  # 70% training
     X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.3333, random_state=42)  # 20% val, 10% test
 
-    # Scaling
+    # Scaling data
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_val_scaled = scaler.transform(X_val)
-    X_test_scaled = scaler.transform(X_test)
 
-    # Model ANN
-    model = MLPRegressor(hidden_layer_sizes=(32, 16), activation='relu', solver='adam', max_iter=500, random_state=42)
-    model.fit(X_train_scaled, y_train)
+    # Inisialisasi model
+    model = MLPRegressor(hidden_layer_sizes=(32, 16), activation='relu', solver='adam', max_iter=max_iter, random_state=42)
 
-    # Evaluasi pada validation set
-    y_val_pred = model.predict(X_val_scaled)
+    for i in range(max_iter):
+        model.partial_fit(X_train_scaled, y_train)
+        y_val_pred = model.predict(X_val_scaled)
+        accuracy = r2_score(y_val, y_val_pred) * 100
+
+        if accuracy >= target_accuracy:
+            break
+
+    # Evaluasi pada training set
+    y_train_pred = model.predict(X_train_scaled)
+
     metrics['ANN'] = {
-        'RMSE': np.sqrt(mean_squared_error(y_val, y_val_pred)),
-        'MSE': mean_squared_error(y_val, y_val_pred),
-        'MAPE': np.mean(np.abs((y_val - y_val_pred) / y_val)) * 100,
-        'R2': r2_score(y_val, y_val_pred)
+        'Training': {
+            'RMSE': np.sqrt(mean_squared_error(y_train, y_train_pred)),
+            'MSE': mean_squared_error(y_train, y_train_pred),
+            'MAPE': np.mean(np.abs((y_train - y_train_pred) / y_train)) * 100,
+            'R2': r2_score(y_train, y_train_pred)
+        },
+        'Validation': {
+            'RMSE': np.sqrt(mean_squared_error(y_val, y_val_pred)),
+            'MSE': mean_squared_error(y_val, y_val_pred),
+            'MAPE': np.mean(np.abs((y_val - y_val_pred) / y_val)) * 100,
+            'R2': r2_score(y_val, y_val_pred)
+        }
     }
 
     # Prediksi pada future data
@@ -113,7 +137,6 @@ def calculate_ann(dataframe, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya):
     predictions['Penjualan_Prediksi'] = model.predict(future_X_scaled)
 
     return predictions, metrics
-
 
 # Variabel global untuk menyimpan data
 @app.route("/", methods=["GET", "POST"])
@@ -222,24 +245,19 @@ def testing():
 
     data = pd.read_csv(filepath)
 
-    predictions_svm = None
-    predictions_ann = None
-
     if request.method == "POST":
         try:
             Jumlah_Stok = float(request.form["Jumlah_Stok"])
             Musim_Periodik = request.form["Musim_Periodik"]
             Penjualan_Sebelumnya = float(request.form["Penjualan_Sebelumnya"])
+            max_iter = int(request.form["max_iter"])
+            target_accuracy = float(request.form["target_accuracy"])
 
-            # Hitung prediksi untuk SVM
-            predictions_svm, _ = calculate_svm(data, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya)
+            predictions_svm, metrics_svm = calculate_svm(data, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya, max_iter, target_accuracy)
+            predictions_ann, metrics_ann = calculate_ann(data, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya, max_iter, target_accuracy)
 
-            # Hitung prediksi untuk ANN
-            predictions_ann, _ = calculate_ann(data, Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya)
-
-            return render_template("testing.html", 
-                                   predictions_svm=predictions_svm, 
-                                   predictions_ann=predictions_ann)
+            return render_template("testing.html", predictions_svm=predictions_svm, metrics_svm=metrics_svm,
+                                   predictions_ann=predictions_ann, metrics_ann=metrics_ann)
 
         except ValueError as e:
             return render_template("testing.html", error_message=str(e))
@@ -254,10 +272,19 @@ def metrics():
 
     data = pd.read_csv(filepath)
 
-    _, metrics_svm = calculate_svm(data, 0, 'Normal', 0)  # Update sesuai dengan data yang Anda punya
-    _, metrics_ann = calculate_ann(data, 0, 'Normal', 0)  # Update sesuai dengan data yang Anda punya
+    max_iter = 500
+    target_accuracy = 95.0
 
-    return render_template("metrics.html", metrics_svm=metrics_svm, metrics_ann=metrics_ann)
+    # Hitung metrik dan pastikan struktur sesuai dengan template
+    _, metrics_svm = calculate_svm(data, 0, 'Normal', 0, max_iter, target_accuracy)
+    _, metrics_ann = calculate_ann(data, 0, 'Normal', 0, max_iter, target_accuracy)
+
+    # Kirim metrik dalam format yang sesuai untuk template
+    return render_template(
+        "metrics.html", 
+        metrics_svm=metrics_svm['SVM'], 
+        metrics_ann=metrics_ann['ANN']
+    )
 
 @app.route('/delete_file/<file_name>', methods=['POST'])
 def delete_file(file_name):
