@@ -104,111 +104,97 @@ def index():
                 return f"Kolom yang diperlukan tidak ditemukan. Pastikan file memiliki kolom: {', '.join(required_columns)}."
 
             session['uploaded_file'] = filepath
-            return redirect(url_for('training'))
+            session['data_shape'] = df.shape
+            session['current_page'] = 1
+
+            # Latih model dan simpan metrik
+            svm_model, svm_scaler, svm_label_mapping, metrics_svm, svm_labels = train_model(df, "SVM", max_iter=500, target_accuracy=95)
+            ann_model, ann_scaler, ann_label_mapping, metrics_ann, ann_labels = train_model(df, "ANN", max_iter=500, target_accuracy=95)
+
+            session['metrics_svm'] = metrics_svm
+            session['metrics_ann'] = metrics_ann
+
+            return redirect(url_for('index'))
         except Exception as e:
             os.remove(filepath)
             return f"Error membaca file: {str(e)}"
 
-    return render_template("import.html")
-
-@app.route("/training", methods=["GET", "POST"])
-def training():
     filepath = session.get('uploaded_file')
-    if not filepath:
+    if filepath and not os.path.exists(filepath):
+        # File tidak ditemukan, reset sesi
+        session.pop('uploaded_file', None)
+        session.pop('data_shape', None)
+        session.pop('current_page', None)
+        session.pop('metrics_svm', None)
+        session.pop('metrics_ann', None)
         return redirect(url_for('index'))
 
-    data = pd.read_csv(filepath)
-    target_accuracy = 95.0
-    max_iter = 500
+    if filepath:
+        df = pd.read_csv(filepath)
+        rows_per_page = 10
+        page = session.get('current_page', 1)
+        start_row = (page - 1) * rows_per_page
+        end_row = start_row + rows_per_page
+        page_data = df.iloc[start_row:end_row]
+        table_html = page_data.to_html(classes="table table-bordered table-striped", index=False)
 
-    svm_model, svm_scaler, svm_label_mapping, metrics_svm, svm_labels = train_model(data, "SVM", max_iter, target_accuracy)
-    ann_model, ann_scaler, ann_label_mapping, metrics_ann, ann_labels = train_model(data, "ANN", max_iter, target_accuracy)
+        metrics_svm = session.get('metrics_svm')
+        metrics_ann = session.get('metrics_ann')
 
-    # Simpan model dan skalar ke file
-    svm_model_file = os.path.join(SAVE_FOLDER, 'svm_model.pkl')
-    ann_model_file = os.path.join(SAVE_FOLDER, 'ann_model.pkl')
-    svm_scaler_file = os.path.join(SAVE_FOLDER, 'svm_scaler.pkl')
-    ann_scaler_file = os.path.join(SAVE_FOLDER, 'ann_scaler.pkl')
+        return render_template(
+            "combined.html",
+            file_uploaded=True,
+            table_html=table_html,
+            filename=os.path.basename(filepath),
+            page=page,
+            has_prev=page > 1,
+            has_next=end_row < len(df),
+            metrics_svm=metrics_svm,
+            metrics_ann=metrics_ann
+        )
+    return render_template("combined.html", file_uploaded=False)
 
-    with open(svm_model_file, 'wb') as f:
-        pickle.dump(svm_model, f)
-    with open(ann_model_file, 'wb') as f:
-        pickle.dump(ann_model, f)
-    with open(svm_scaler_file, 'wb') as f:
-        pickle.dump(svm_scaler, f)
-    with open(ann_scaler_file, 'wb') as f:
-        pickle.dump(ann_scaler, f)
-
-    # Simpan nama file ke session
-    session['svm_model_file'] = 'svm_model.pkl'
-    session['ann_model_file'] = 'ann_model.pkl'
-    session['svm_scaler_file'] = 'svm_scaler.pkl'
-    session['ann_scaler_file'] = 'ann_scaler.pkl'
-    session['svm_label_mapping'] = svm_label_mapping
-    session['ann_label_mapping'] = ann_label_mapping
-    session['original_labels'] = svm_labels  # Simpan label asli
-    print(f"Original labels disimpan: {svm_labels}")
-
-    return render_template("training.html", metrics_svm=metrics_svm["SVM"], metrics_ann=metrics_ann["ANN"])
-
-@app.route("/testing", methods=["POST", "GET"])
+@app.route("/testing", methods=["GET", "POST"])
 def testing():
-    if 'svm_model_file' not in session or 'ann_model_file' not in session:
-        return redirect(url_for('training'))
+    return render_template("testing.html", message="Halaman Testing")
 
-    # Muat model dan skalar dari file
-    svm_model_file = os.path.join(SAVE_FOLDER, session['svm_model_file'])
-    ann_model_file = os.path.join(SAVE_FOLDER, session['ann_model_file'])
-    svm_scaler_file = os.path.join(SAVE_FOLDER, session['svm_scaler_file'])
-    ann_scaler_file = os.path.join(SAVE_FOLDER, session['ann_scaler_file'])
-
-    with open(svm_model_file, 'rb') as f:
-        svm_model = pickle.load(f)
-    with open(ann_model_file, 'rb') as f:
-        ann_model = pickle.load(f)
-    with open(svm_scaler_file, 'rb') as f:
-        svm_scaler = pickle.load(f)
-    with open(ann_scaler_file, 'rb') as f:
-        ann_scaler = pickle.load(f)
-
-    svm_label_mapping = session['svm_label_mapping']
-    ann_label_mapping = session['ann_label_mapping']
-    original_labels = session.get('original_labels', [])
-    print(f"Original labels di testing: {original_labels}")
-
-    if not original_labels:
-        return render_template("testing.html", error_message="Tidak ada label yang valid ditemukan. Silakan lakukan pelatihan ulang.", original_labels=original_labels)
-
-    if request.method == "POST":
-        try:
-            features = {
-                "Jumlah_Stok": float(request.form["Jumlah_Stok"]),
-                "Musim_Periodik": request.form["Musim_Periodik"],
-                "Penjualan_Sebelumnya": float(request.form["Penjualan_Sebelumnya"]),
-            }
-            print(f"Features input: {features}")
-            prediction_svm = predict_model(svm_model, svm_scaler, svm_label_mapping, features)
-            prediction_ann = predict_model(ann_model, ann_scaler, ann_label_mapping, features)
-            return render_template("testing.html", predictions_svm={"Penjualan_Prediksi": prediction_svm}, predictions_ann={"Penjualan_Prediksi": prediction_ann}, original_labels=original_labels)
-        except ValueError as e:
-            return render_template("testing.html", error_message=str(e), original_labels=original_labels)
-
-    return render_template("testing.html", original_labels=original_labels)
-
-@app.route("/metrics", methods=["GET"])
-def metrics():
+@app.route("/paginate/<int:page>", methods=["GET"])
+def paginate(page):
     filepath = session.get('uploaded_file')
     if not filepath:
         return redirect(url_for('index'))
 
-    data = pd.read_csv(filepath)
-    target_accuracy = 95.0
-    max_iter = 500
+    df = pd.read_csv(filepath)
+    rows_per_page = 10
+    total_pages = (len(df) + rows_per_page - 1) // rows_per_page
 
-    _, _, _, metrics_svm, _ = train_model(data, "SVM", max_iter, target_accuracy)
-    _, _, _, metrics_ann, _ = train_model(data, "ANN", max_iter, target_accuracy)
+    start_row = (page - 1) * rows_per_page
+    end_row = start_row + rows_per_page
+    page_data = df.iloc[start_row:end_row]
 
-    return render_template("metrics.html", metrics_svm=metrics_svm["SVM"], metrics_ann=metrics_ann["ANN"])
+    table_html = page_data.to_html(classes="table table-bordered table-striped", index=False)
+
+    return render_template(
+        "combined.html",
+        file_uploaded=True,
+        table_html=table_html,
+        filename=os.path.basename(filepath),
+        page=page,
+        has_prev=page > 1,
+        has_next=page < total_pages,
+        metrics_svm=session.get('metrics_svm'),
+        metrics_ann=session.get('metrics_ann')
+    )
+
+@app.route("/delete_file", methods=["POST"])
+def delete_file():
+    filepath = session.get('uploaded_file')
+    if filepath and os.path.exists(filepath):
+        os.remove(filepath)
+        session.pop('uploaded_file', None)
+        session.pop('data_shape', None)
+        session.pop('current_page', None)
+    return redirect(url_for('index'))
 
 if __name__ == "__main__":
     app.run(debug=True)

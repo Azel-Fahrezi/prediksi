@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>Unggah File CSV dan Pelatihan Model</h3>
+
+<!-- Form Unggah -->
+{% if not file_uploaded %}
+<form action="{{ url_for('index') }}" method="POST" enctype="multipart/form-data">
+    <div class="form-group">
+        <label for="file">Pilih File CSV:</label>
+        <input type="file" name="file" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary mt-2">Unggah</button>
+</form>
+{% endif %}
+
+<!-- Jika File Sudah Diupload -->
+{% if file_uploaded %}
+<hr>
+<h3>Data Training</h3>
+<p>File: {{ filename }}</p>
+<div class="table-responsive">
+    {{ table_html|safe }}
+</div>
+
+<!-- Tombol Navigasi Halaman -->
+<div class="d-flex justify-content-between mt-3">
+    {% if has_prev %}
+        <a href="{{ url_for('paginate', page=page-1) }}" class="btn btn-secondary">Sebelumnya</a>
+    {% else %}
+        <span class="btn btn-secondary disabled">Sebelumnya</span>
+    {% endif %}
+    
+    <span>Halaman {{ page }}</span>
+
+    {% if has_next %}
+        <a href="{{ url_for('paginate', page=page+1) }}" class="btn btn-secondary">Selanjutnya</a>
+    {% else %}
+        <span class="btn btn-secondary disabled">Selanjutnya</span>
+    {% endif %}
+</div>
+
+<!-- Hapus File -->
+<div class="d-flex align-items-center gap-2 mt-3">
+    <form action="{{ url_for('delete_file') }}" method="POST" style="display:inline;">
+        <button type="submit" class="btn btn-danger">Hapus File</button>
+    </form>
+</div>
+
+<hr>
+<h3>Metrik Evaluasi Model</h3>
+
+<h4>SVM Metrics</h4>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Metric</th>
+            <th>Training</th>
+            <th>Validation</th>
+            <th>Difference (%)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if metrics_svm and 'Training Metrics' in metrics_svm %}
+        {% for metric, value in metrics_svm['Training Metrics'].items() %}
+        <tr>
+            <td>{{ metric }}</td>
+            <td>{{ value }}</td>
+            <td>{{ metrics_svm['Validation Metrics'][metric] }}</td>
+            <td>{{ ((metrics_svm['Validation Metrics'][metric] - value) / value) * 100 | round(2) }}</td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+            <td colspan="4">Data SVM tidak tersedia.</td>
+        </tr>
+        {% endif %}
+    </tbody>
+</table>
+
+<h4>ANN Metrics</h4>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Metric</th>
+            <th>Training</th>
+            <th>Validation</th>
+            <th>Difference (%)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if metrics_ann and 'Training Metrics' in metrics_ann %}
+        {% for metric, value in metrics_ann['Training Metrics'].items() %}
+        <tr>
+            <td>{{ metric }}</td>
+            <td>{{ value }}</td>
+            <td>{{ metrics_ann['Validation Metrics'][metric] }}</td>
+            <td>{{ ((metrics_ann['Validation Metrics'][metric] - value) / value) * 100 | round(2) }}</td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+            <td colspan="4">Data ANN tidak tersedia.</td>
+        </tr>
+        {% endif %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}
