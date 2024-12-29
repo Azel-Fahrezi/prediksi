@@ -10,9 +10,9 @@
     <div class="container mt-5">
         <h1 class="mb-4">Testing Model</h1>
 
-        {% if error_message %}
+        {% if error %}
         <div class="alert alert-danger">
-            {{ error_message }}
+            {{ error }}
         </div>
         {% endif %}
 
@@ -23,9 +23,9 @@
             </div>
 
             <div class="mb-3">
-                <label for="Musim_Periodik" class="form-label">Musim Periodik</label>
-                <select name="Musim_Periodik" id="Musim_Periodik" class="form-control" required>
-                    {% for label in original_labels %}
+                <label for="musim_periodik">Musim Periodik</label>
+                <select id="musim_periodik" name="Musim_Periodik" class="form-control">
+                    {% for label in labels %}
                     <option value="{{ label }}">{{ label }}</option>
                     {% endfor %}
                 </select>
@@ -36,7 +36,7 @@
                 <input type="number" step="any" class="form-control" id="Penjualan_Sebelumnya" name="Penjualan_Sebelumnya" required>
             </div>
 
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="submit" class="btn btn-primary">Prediksi</button>
         </form>
 
         {% if predictions_svm or predictions_ann %}
@@ -53,19 +53,23 @@
                     {% if predictions_svm %}
                     <tr>
                         <td>SVM</td>
-                        <td>{{ predictions_svm['Penjualan_Prediksi'] }}</td>
+                        <td>{{ predictions_svm }}</td>
                     </tr>
                     {% endif %}
                     {% if predictions_ann %}
                     <tr>
                         <td>ANN</td>
-                        <td>{{ predictions_ann['Penjualan_Prediksi'] }}</td>
+                        <td>{{ predictions_ann }}</td>
                     </tr>
                     {% endif %}
                 </tbody>
             </table>
         </div>
         {% endif %}
+
+        <div class="mt-4">
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Kembali ke Data</a>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
