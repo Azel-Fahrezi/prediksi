@@ -59,11 +59,9 @@ def train_model(dataframe, model_type, max_iter, target_accuracy):
         result = "Model belum mencapai target akurasi."
 
     metrics = {
-        model_type: {
-            "Training Metrics": train_metrics,
-            "Validation Metrics": val_metrics,
-            "Result": result
-        }
+        "Training Metrics": train_metrics,
+        "Validation Metrics": val_metrics,
+        "Result": result
     }
 
     return model, scaler, label_mapping, metrics, original_labels
@@ -111,8 +109,8 @@ def index():
             svm_model, svm_scaler, svm_label_mapping, metrics_svm, svm_labels = train_model(df, "SVM", max_iter=500, target_accuracy=95)
             ann_model, ann_scaler, ann_label_mapping, metrics_ann, ann_labels = train_model(df, "ANN", max_iter=500, target_accuracy=95)
 
-            session['metrics_svm'] = metrics_svm
-            session['metrics_ann'] = metrics_ann
+            session['metrics_svm'] = metrics_svm if metrics_svm else {}
+            session['metrics_ann'] = metrics_ann if metrics_ann else {}
 
             return redirect(url_for('index'))
         except Exception as e:
