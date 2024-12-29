@@ -4,20 +4,26 @@
 
     <!-- Form untuk input Jumlah_Stok, Musim_Periodik, Penjualan_Sebelumnya -->
     <form method="POST" action="{{ url_for('testing') }}">
-        <label for="Jumlah_Stok">Jumlah Stok:</label>
-        <input type="number" id="Jumlah_Stok" name="Jumlah_Stok" required>
+        <div class="mb-3">
+            <label for="Jumlah_Stok" class="form-label">Jumlah Stok:</label>
+            <input type="number" id="Jumlah_Stok" name="Jumlah_Stok" class="form-control" required>
+        </div>
     
-        <label for="Musim_Periodik">Musim Periodik:</label>
-        <select id="Musim_Periodik" name="Musim_Periodik" required>
-            <option value="Normal">Normal</option>
-            <option value="Liburan">Liburan</option>
-            <option value="Musim Flu">Musim Flu</option>
-        </select>
+        <div class="mb-3">
+            <label for="Musim_Periodik" class="form-label">Musim Periodik:</label>
+            <select id="Musim_Periodik" name="Musim_Periodik" class="form-control" required>
+                <option value="Normal">Normal</option>
+                <option value="Liburan">Liburan</option>
+                <option value="Musim Flu">Musim Flu</option>
+            </select>
+        </div>
     
-        <label for="Penjualan_Sebelumnya">Penjualan Sebelumnya:</label>
-        <input type="number" id="Penjualan_Sebelumnya" name="Penjualan_Sebelumnya" required>
+        <div class="mb-3">
+            <label for="Penjualan_Sebelumnya" class="form-label">Penjualan Sebelumnya:</label>
+            <input type="number" id="Penjualan_Sebelumnya" name="Penjualan_Sebelumnya" class="form-control" required>
+        </div>
     
-        <button type="submit">Prediksi</button>
+        <button type="submit" class="btn btn-primary">Prediksi</button>
     </form>    
 
     <!-- Area untuk menampilkan hasil prediksi -->
