@@ -35,32 +35,62 @@
 
 Jika kamu menggunakan VSCode, pastikan interpreter Python diatur untuk menggunakan virtual environment yang telah dibuat. Pilih interpreter dengan menekan `Ctrl+Shift+P`, ketik "Python: Select Interpreter", dan pilih `myenv/bin/python`.
 
-## Library yang Digunakan
+---
+
+## **Library yang Digunakan**
 
 1. **Flask**  
-   Flask adalah framework micro web untuk Python yang digunakan untuk membangun aplikasi web.
-   
+   Flask adalah framework micro web untuk Python yang digunakan untuk membangun aplikasi web. Dalam aplikasi ini, Flask digunakan untuk:
+   - Mengelola sesi pengguna.
+   - Routing URL.
+   - Rendering template dengan Jinja2.
+   - Menangani unggahan file.
+
 2. **Pandas**  
-   Pustaka untuk manipulasi dan analisis data, terutama digunakan untuk memanipulasi data dalam format tabel (DataFrame).
+   Pustaka untuk manipulasi dan analisis data. Digunakan untuk:
+   - Membaca dan memproses file CSV.
+   - Memanipulasi data dalam format tabel (DataFrame).
 
 3. **OS**  
-   Modul untuk berinteraksi dengan sistem operasi, digunakan untuk menangani path dan operasi file.
+   Modul bawaan Python untuk berinteraksi dengan sistem operasi. Digunakan untuk:
+   - Mengelola path file.
+   - Membuat folder.
+   - Menghapus file.
 
 4. **NumPy**  
-   Pustaka untuk komputasi numerik dan manipulasi array multidimensi.
+   Pustaka untuk komputasi numerik. Dalam aplikasi ini digunakan untuk:
+   - Perhitungan array multidimensi.
+   - Operasi numerik seperti menghitung RMSE, MSE, dan MAPE.
 
 5. **Scikit-learn**  
-   Pustaka untuk machine learning. Digunakan untuk standar skala data dan model Support Vector Regression (SVR).
+   Pustaka untuk machine learning. Digunakan untuk:
+   - Model Support Vector Regression (SVR) dan Multilayer Perceptron (MLP).
+   - Standarisasi data dengan `StandardScaler`.
+   - Encoding label kategori dengan `LabelEncoder`.
+   - Evaluasi model menggunakan metrik seperti RMSE, MSE, dan R2.
 
-## Install Library dan Menjalankan Code
+6. **UUID**  
+   Modul untuk menghasilkan identifier unik. Digunakan untuk membuat nama file yang unik saat file diunggah.
+
+7. **Pickle**  
+   Modul bawaan Python untuk serialisasi dan deserialisasi objek. Digunakan untuk menyimpan dan memuat model machine learning serta scaler.
+
+8. **Flask-Session**  
+   Ekstensi Flask untuk mengelola sesi berbasis filesystem. Digunakan untuk menyimpan informasi seperti path file model dan scaler, serta label kategori.
+
+---
+
+## **Install Library dan Menjalankan Code**
+
 Pastikan virtual environment sudah aktif. Kemudian, jalankan perintah berikut untuk menginstal semua pustaka yang dibutuhkan:
 
 ```bash
-pip install flask pandas numpy scikit-learn
+pip install flask pandas numpy scikit-learn flask-session
 ```
-Kemudian untuk menjalankannya
+
+Setelah itu, jalankan aplikasi dengan perintah:
+
 ```bash
 python app.py
 ```
-
 
