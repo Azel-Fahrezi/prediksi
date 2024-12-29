@@ -33,6 +33,8 @@
             <span class="btn btn-secondary disabled">Sebelumnya</span>
         {% endif %}
         
+        <span>Halaman {{ page }}</span>
+
         {% if has_next %}
             <a href="{{ url_for('paginate', page=page+1) }}" class="btn btn-secondary">Selanjutnya</a>
         {% else %}
@@ -47,36 +49,5 @@
         </form>
         <h8>File: {{ filename }}</h8>
     </div>    
-
-    <!-- Form Input Parameter Training -->
-    <hr>
-    <h3>Parameter Training</h3>
-    <form action="{{ url_for('testing') }}" method="POST">
-        <div class="form-group">
-            <label for="Jumlah_Stok">Jumlah Stok:</label>
-            <input type="number" name="Jumlah_Stok" class="form-control" required>
-        </div>
-        <div class="form-group">
-            <label for="Musim_Periodik">Musim Periodik:</label>
-            <select name="Musim_Periodik" class="form-control" required>
-                <option value="Normal">Normal</option>
-                <option value="Liburan">Liburan</option>
-                <option value="Musim Flu">Musim Flu</option>
-            </select>
-        </div>        
-        <div class="form-group">
-            <label for="Penjualan_Sebelumnya">Penjualan Sebelumnya:</label>
-            <input type="number" name="Penjualan_Sebelumnya" class="form-control" required>
-        </div>
-        <div class="form-group">
-            <label for="max_iter">Maksimal Iterasi:</label>
-            <input type="number" name="max_iter" class="form-control" value="500" required>
-        </div>
-        <div class="form-group">
-            <label for="target_accuracy">Target Akurasi (%):</label>
-            <input type="number" step="0.01" name="target_accuracy" class="form-control" value="95.0" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Proses Training</button>
-    </form>
 {% endif %}
 {% endblock %}
